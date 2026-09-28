@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}{{ store.store_name }}{% endblock %}
+{% block content %}
+<div class="card mb-4">
+    {% if store.banner %}<img src="{{ store.banner.url }}" class="card-img-top" style="max-height:200px;object-fit:cover;">{% endif %}
+    <div class="card-body">
+        <h4>{{ store.store_name }}</h4>
+        <p>{{ store.business_description }}</p>
+    </div>
+</div>
+<h5>Products from this store</h5>
+<div class="row g-3">
+{% for product in products %}
+    <div class="col-md-3">
+        <div class="card product-card">
+            {% if product.image %}<img src="{{ product.image.url }}">{% endif %}
+            <div class="card-body">
+                <p class="small">{{ product.name }}</p>
+                <strong>₹{{ product.display_price }}</strong><br>
+                <a href="{{ product.get_absolute_url }}" class="btn btn-sm btn-outline-primary mt-2">View</a>
+            </div>
+        </div>
+    </div>
+{% empty %}
+    <p class="text-muted">No products yet.</p>
+{% endfor %}
+</div>
+{% endblock %}

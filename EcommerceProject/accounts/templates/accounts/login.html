@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+<div class="col-md-5">
+<h4>Login</h4>
+<form method="post" class="card p-4 bg-white">
+    {% csrf_token %}
+    {% for field in form %}
+    <div class="mb-3">
+        <label class="form-label">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
+    </div>
+    {% endfor %}
+    <button class="btn btn-primary" type="submit">Login</button>
+</form>
+<p class="mt-2">No account? <a href="{% url 'accounts:register' %}">Register</a></p>
+</div>
+</div>
+{% endblock %}

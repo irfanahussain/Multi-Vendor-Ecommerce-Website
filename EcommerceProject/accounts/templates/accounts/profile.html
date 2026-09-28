@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}My Profile{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <h4>My Profile</h4>
+        <form method="post" enctype="multipart/form-data" class="card p-4 bg-white">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="mb-3">
+                <label class="form-label">{{ field.label }}</label>
+                {{ field }}
+            </div>
+            {% endfor %}
+            <button class="btn btn-primary" type="submit">Save</button>
+        </form>
+    </div>
+    <div class="col-md-6">
+        <h4>My Addresses</h4>
+        {% for addr in addresses %}
+        <div class="card p-3 mb-2">
+            <strong>{{ addr.full_name }}</strong> {% if addr.is_default %}<span class="badge bg-success">Default</span>{% endif %}<br>
+            {{ addr.address_line }}, {{ addr.city }}, {{ addr.state }} - {{ addr.pincode }}<br>
+            <small>{{ addr.phone }}</small>
+            <form method="post" action="{% url 'accounts:address_delete' addr.id %}" class="confirm-action mt-2" data-confirm="Delete this address?">
+                {% csrf_token %}
+                <button class="btn btn-sm btn-outline-danger">Delete</button>
+            </form>
+        </div>
+        {% empty %}
+        <p class="text-muted">No addresses saved.</p>
+        {% endfor %}
+        <a href="{% url 'accounts:address_add' %}" class="btn btn-outline-primary">Add Address</a>
+    </div>
+</div>
+{% endblock %}

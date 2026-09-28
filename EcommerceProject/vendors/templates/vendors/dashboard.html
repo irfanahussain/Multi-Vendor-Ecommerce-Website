@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Vendor Dashboard{% endblock %}
+{% block content %}
+<h4>{{ store.store_name }} — Dashboard</h4>
+{% if store.status == 'pending' %}
+<div class="alert alert-warning">Your store is pending admin approval. Your products won't be visible to customers until then.</div>
+{% endif %}
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="dashboard-stat bg-primary"><h3>{{ total_products }}</h3>Products</div></div>
+    <div class="col-md-3"><div class="dashboard-stat bg-success"><h3>{{ total_orders }}</h3>Orders</div></div>
+    <div class="col-md-3"><div class="dashboard-stat bg-warning"><h3>{{ pending_orders }}</h3>Pending</div></div>
+    <div class="col-md-3"><div class="dashboard-stat bg-danger"><h3>{{ low_stock_count }}</h3>Low Stock</div></div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card p-3">
+            <h6>Total Sales</h6>
+            <h3>₹{{ total_sales }}</h3>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <a href="{% url 'catalog:vendor_product_list' %}" class="btn btn-primary me-2">Manage Products</a>
+        <a href="{% url 'orders:vendor_order_list' %}" class="btn btn-outline-primary me-2">Manage Orders</a>
+        <a href="{% url 'vendors:store_settings' %}" class="btn btn-outline-secondary">Store Settings</a>
+    </div>
+</div>
+
+<h6>Recent Orders</h6>
+<table class="table bg-white">
+    <thead><tr><th>Order</th><th>Status</th><th>Amount</th></tr></thead>
+    <tbody>
+    {% for vo in recent_orders %}
+        <tr><td>{{ vo.order.order_number }}</td><td>{{ vo.get_status_display }}</td><td>₹{{ vo.subtotal }}</td></tr>
+    {% empty %}
+        <tr><td colspan="3" class="text-muted">No orders yet.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

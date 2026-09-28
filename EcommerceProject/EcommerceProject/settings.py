@@ -42,7 +42,8 @@ INSTALLED_APPS = [
     'catalog',
     'orders',
     'reviews',
-    'dashboard'
+    'dashboard',
+    'returns_app'
 ]
 
 MIDDLEWARE = [

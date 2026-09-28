@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Store Settings{% endblock %}
+{% block content %}
+<h4>Store Settings</h4>
+<form method="post" enctype="multipart/form-data" class="card p-4 bg-white">
+    {% csrf_token %}
+    {% for field in form %}
+    <div class="mb-3">
+        <label class="form-label">{{ field.label }}</label>
+        {{ field }}
+    </div>
+    {% endfor %}
+    <button class="btn btn-primary" type="submit">Save</button>
+</form>
+{% endblock %}
