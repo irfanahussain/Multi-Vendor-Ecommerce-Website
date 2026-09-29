@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Order {{ vendor_order.order.order_number }}{% endblock %}
+{% block content %}
+<h4>Order {{ vendor_order.order.order_number }}</h4>
+<p>Customer: {{ vendor_order.order.customer.username }}</p>
+<table class="table bg-white">
+    <thead><tr><th>Product</th><th>Qty</th><th>Total</th></tr></thead>
+    <tbody>
+    {% for item in vendor_order.items.all %}
+        <tr><td>{{ item.product_name }} ({{ item.variant_name }})</td><td>{{ item.quantity }}</td><td>₹{{ item.line_total }}</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<div class="row">
+    <div class="col-md-4">
+        <p>Subtotal: ₹{{ vendor_order.subtotal }}</p>
+        <p>Commission ({{ vendor_order.commission_percent }}%): -₹{{ vendor_order.commission_amount }}</p>
+        <p><strong>Your earning: ₹{{ vendor_order.vendor_earning }}</strong></p>
+    </div>
+    <div class="col-md-4">
+        <form method="post">
+            {% csrf_token %}
+            <label class="form-label">Update Status</label>
+            <select name="status" class="form-select mb-2">
+                {% for value, label in vendor_order.Status.choices %}
+                <option value="{{ value }}" {% if value == vendor_order.status %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <button class="btn btn-primary">Update</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Your Cart{% endblock %}
+{% block content %}
+<h4>Your Cart</h4>
+{% if cart.items.all %}
+<table class="table bg-white">
+    <thead><tr><th>Product</th><th>Price</th><th>Quantity</th><th>Total</th><th></th></tr></thead>
+    <tbody>
+    {% for item in cart.items.all %}
+        <tr>
+            <td>{{ item.variant.product.name }} <br><small class="text-muted">{{ item.variant.name }}</small></td>
+            <td>₹{{ item.variant.effective_price }}</td>
+            <td style="max-width:140px;">
+                <form method="post" action="{% url 'orders:cart_update' item.id %}" class="d-flex qty-stepper input-group">
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-outline-secondary btn-sm qty-minus">-</button>
+                    <input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ item.variant.stock_quantity }}" class="form-control form-control-sm text-center">
+                    <button type="button" class="btn btn-outline-secondary btn-sm qty-plus">+</button>
+                    <button type="submit" class="btn btn-primary btn-sm">Update</button>
+                </form>
+            </td>
+            <td>₹{{ item.line_total }}</td>
+            <td>
+                <a href="{% url 'orders:cart_remove' item.id %}" class="btn btn-sm btn-outline-danger">Remove</a>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<div class="row">
+    <div class="col-md-5 offset-md-7">
+        <div class="card p-3">
+            {% if coupon %}
+            <div class="d-flex justify-content-between">
+                <span>Coupon <strong>{{ coupon.code }}</strong> applied</span>
+                <a href="{% url 'orders:remove_coupon' %}" class="text-danger small">Remove</a>
+            </div>
+            <p class="text-success">- ₹{{ discount }}</p>
+            {% else %}
+            <form method="post" action="{% url 'orders:apply_coupon' %}" class="d-flex gap-2 mb-2">
+                {% csrf_token %}
+                <input type="text" name="code" class="form-control" placeholder="Coupon code">
+                <button class="btn btn-outline-primary" type="submit">Apply</button>
+            </form>
+            {% endif %}
+            <div class="d-flex justify-content-between"><span>Subtotal</span><strong>₹{{ cart.subtotal }}</strong></div>
+            <a href="{% url 'orders:checkout' %}" class="btn btn-primary w-100 mt-3">Proceed to Checkout</a>
+        </div>
+    </div>
+</div>
+{% else %}
+<p class="text-muted">Your cart is empty. <a href="{% url 'catalog:home' %}">Browse products</a></p>
+{% endif %}
+{% endblock %}

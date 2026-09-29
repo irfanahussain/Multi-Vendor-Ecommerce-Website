@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}My Orders (Vendor){% endblock %}
+{% block content %}
+<h4>Orders</h4>
+<table class="table bg-white">
+    <thead><tr><th>Order</th><th>Customer</th><th>Subtotal</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    {% for vo in vendor_orders %}
+        <tr>
+            <td>{{ vo.order.order_number }}</td>
+            <td>{{ vo.order.customer.username }}</td>
+            <td>₹{{ vo.subtotal }}</td>
+            <td><span class="badge bg-secondary">{{ vo.get_status_display }}</span></td>
+            <td><a href="{% url 'orders:vendor_order_detail' vo.id %}" class="btn btn-sm btn-outline-primary">Manage</a></td>
+        </tr>
+    {% empty %}
+        <tr><td colspan="5" class="text-muted">No orders yet.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

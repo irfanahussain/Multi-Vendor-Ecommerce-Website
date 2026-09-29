@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}{% if product %}Edit{% else %}Add{% endif %} Product{% endblock %}
+{% block content %}
+<h4>{% if product %}Edit{% else %}Add{% endif %} Product</h4>
+<form method="post" enctype="multipart/form-data" class="card p-4 bg-white">
+    {% csrf_token %}
+    {% for field in form %}
+    <div class="mb-3">
+        <label class="form-label">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
+    </div>
+    {% endfor %}
+    <button class="btn btn-primary" type="submit">Save</button>
+</form>
+{% if not product %}
+<p class="text-muted mt-2">After saving, you'll add variants (size/color/stock) on the next page. New products need admin approval before they go live.</p>
+{% endif %}
+{% endblock %}

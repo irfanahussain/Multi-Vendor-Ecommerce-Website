@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Adjust Stock{% endblock %}
+{% block content %}
+<h4>Adjust Stock — {{ variant }}</h4>
+<p>Current stock: <strong>{{ variant.stock_quantity }}</strong></p>
+<form method="post" class="card p-4 bg-white" style="max-width:400px;">
+    {% csrf_token %}
+    {% for field in form %}
+    <div class="mb-3">
+        <label class="form-label">{{ field.label }}</label>
+        {{ field }}
+    </div>
+    {% endfor %}
+    <button class="btn btn-primary" type="submit">Update Stock</button>
+</form>
+<h6 class="mt-4">Recent stock history</h6>
+<ul class="list-group">
+{% for h in variant.stock_history.all|slice:":10" %}
+    <li class="list-group-item d-flex justify-content-between">
+        <span>{{ h.get_reason_display }} — {{ h.note }}</span>
+        <span class="{% if h.change_quantity < 0 %}text-danger{% else %}text-success{% endif %}">{{ h.change_quantity }}</span>
+    </li>
+{% endfor %}
+</ul>
+{% endblock %}

@@ -1,0 +1,7 @@
+body { background-color: #f7f8fa; }
+.card { border-radius: 12px; }
+.product-card img { height: 200px; object-fit: cover; border-radius: 10px 10px 0 0; }
+.price-strike { text-decoration: line-through; color: #999; font-size: 0.9em; }
+.badge-status { font-size: 0.8em; }
+.stars { color: #f5a623; }
+.dashboard-stat { border-radius: 12px; padding: 1.2rem; color: #fff; }

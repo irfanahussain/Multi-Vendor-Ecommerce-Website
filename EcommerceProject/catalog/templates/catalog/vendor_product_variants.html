@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Variants — {{ product.name }}{% endblock %}
+{% block content %}
+<h4>Variants for {{ product.name }}</h4>
+<table class="table table-bordered bg-white">
+    <thead><tr><th>Name</th><th>SKU</th><th>Price</th><th>Stock</th><th>Active</th><th></th></tr></thead>
+    <tbody>
+    {% for v in variants %}
+        <tr>
+            <td>{{ v.name }}</td><td>{{ v.sku }}</td>
+            <td>{{ v.price|default:"(uses product price)" }}</td>
+            <td>{{ v.stock_quantity }}</td>
+            <td>{{ v.is_active|yesno:"Yes,No" }}</td>
+            <td><a href="{% url 'catalog:vendor_variant_stock' v.id %}" class="btn btn-sm btn-outline-secondary">Adjust Stock</a></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<h5 class="mt-4">Add a variant</h5>
+<form method="post" enctype="multipart/form-data" class="card p-4 bg-white" style="max-width:500px;">
+    {% csrf_token %}
+    {% for field in form %}
+    <div class="mb-3">
+        <label class="form-label">{{ field.label }}</label>
+        {{ field }}
+    </div>
+    {% endfor %}
+    <button class="btn btn-primary" type="submit">Add Variant</button>
+</form>
+<a href="{% url 'catalog:vendor_product_list' %}" class="btn btn-link mt-2">Back to Products</a>
+{% endblock %}

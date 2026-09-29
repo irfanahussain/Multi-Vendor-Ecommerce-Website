@@ -1,0 +1,72 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}MultiMart{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{% static 'css/style.css' %}" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="{% url 'catalog:home' %}">MultiMart</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navMenu">
+                <form class="d-flex flex-grow-1 mx-3" method="get" action="{% url 'catalog:home' %}">
+                    <input class="form-control" type="search" name="q" placeholder="Search products..." value="{{ request.GET.q }}">
+                </form>
+                <ul class="navbar-nav ms-auto align-items-lg-center">
+                    {% if user.is_authenticated %}
+                        {% if user.is_customer_role %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'orders:cart' %}">
+                                Cart <span class="badge bg-primary">{{ cart_item_count }}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'orders:order_list' %}">My Orders</a></li>
+                        {% endif %}
+                        <li class="nav-item"><a class="nav-link" href="{% url 'dashboard:redirect' %}">Dashboard</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'accounts:profile' %}">{{ user.username }}</a></li>
+                        <li class="nav-item">
+                            <form method="post" action="{% url 'accounts:logout' %}" class="d-inline">
+                                {% csrf_token %}
+                                <button class="btn btn-outline-light btn-sm" type="submit">Logout</button>
+                            </form>
+                        </li>
+                    {% else %}
+                        <li class="nav-item"><a class="nav-link" href="{% url 'accounts:login' %}">Login</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'accounts:register' %}">Register</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-3">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    </div>
+
+    <main class="container my-4">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-dark text-light text-center py-3 mt-5">
+        <div class="container">
+            <small>&copy; 2026 MultiMart — Multi-Vendor E-Commerce Demo</small>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/main.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
