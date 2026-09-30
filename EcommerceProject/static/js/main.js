@@ -32,4 +32,20 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     });
+
+    // Django's auto-rendered {{ field }} form fields don't carry Bootstrap
+    // classes on their own. Rather than editing every forms.py, apply the
+    // right class here — but only to fields we didn't already style by hand
+    // in a template (those already have a class attribute, so we skip them).
+    document.querySelectorAll('form input, form select, form textarea').forEach(function (el) {
+        if (el.className) return; // already styled explicitly in the template
+        var type = (el.getAttribute('type') || '').toLowerCase();
+        if (type === 'checkbox' || type === 'radio') {
+            el.classList.add('form-check-input');
+        } else if (el.tagName === 'SELECT') {
+            el.classList.add('form-select');
+        } else if (type !== 'submit' && type !== 'button' && type !== 'hidden') {
+            el.classList.add('form-control');
+        }
+    });
 });

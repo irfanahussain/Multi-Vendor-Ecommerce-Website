@@ -6,40 +6,65 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}MultiMart{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="{% static 'css/style.css' %}" rel="stylesheet">
 </head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+<body class="mm-body">
+    <nav class="navbar navbar-expand-lg mm-navbar sticky-top">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="{% url 'catalog:home' %}">MultiMart</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+            <a class="navbar-brand" href="{% url 'catalog:home' %}">MultiMart</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navMenu">
-                <form class="d-flex flex-grow-1 mx-3" method="get" action="{% url 'catalog:home' %}">
-                    <input class="form-control" type="search" name="q" placeholder="Search products..." value="{{ request.GET.q }}">
+                <form class="mm-search flex-grow-1 mx-lg-4 my-2 my-lg-0" method="get" action="{% url 'catalog:home' %}" role="search">
+                    <svg class="mm-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+                    <input class="form-control" type="search" name="q" placeholder="Search products, brands, vendors..." value="{{ request.GET.q }}" aria-label="Search">
                 </form>
-                <ul class="navbar-nav ms-auto align-items-lg-center">
+                <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
                     {% if user.is_authenticated %}
                         {% if user.is_customer_role %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'orders:cart' %}">
-                                Cart <span class="badge bg-primary">{{ cart_item_count }}</span>
+                            <a class="nav-link mm-nav-icon" href="{% url 'orders:cart' %}">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>
+                                <span>Cart</span>
+                                {% if cart_item_count %}<span class="mm-badge">{{ cart_item_count }}</span>{% endif %}
                             </a>
                         </li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'orders:order_list' %}">My Orders</a></li>
-                        {% endif %}
-                        <li class="nav-item"><a class="nav-link" href="{% url 'dashboard:redirect' %}">Dashboard</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'accounts:profile' %}">{{ user.username }}</a></li>
                         <li class="nav-item">
-                            <form method="post" action="{% url 'accounts:logout' %}" class="d-inline">
-                                {% csrf_token %}
-                                <button class="btn btn-outline-light btn-sm" type="submit">Logout</button>
-                            </form>
+                            <a class="nav-link mm-nav-icon" href="{% url 'orders:order_list' %}">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg>
+                                <span>My Orders</span>
+                                {% if active_order_count %}<span class="mm-badge">{{ active_order_count }}</span>{% endif %}
+                            </a>
+                        </li>
+                        {% endif %}
+                        <li class="nav-item dropdown ms-lg-2">
+                            <a class="nav-link dropdown-toggle mm-user-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <span class="mm-avatar">{{ user.username|slice:":1"|upper }}</span>
+                                <span class="d-lg-none d-xl-inline">{{ user.username }}</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end mm-dropdown">
+                                <li class="dropdown-header">Signed in as <strong>{{ user.username }}</strong></li>
+                                <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">My Profile</a></li>
+                                <li><a class="dropdown-item" href="{% url 'dashboard:redirect' %}">Dashboard</a></li>
+                                {% if user.is_customer_role %}
+                                <li><a class="dropdown-item" href="{% url 'orders:order_list' %}">My Orders</a></li>
+                                {% endif %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="post" action="{% url 'accounts:logout' %}">
+                                        {% csrf_token %}
+                                        <button class="dropdown-item text-danger" type="submit">Logout</button>
+                                    </form>
+                                </li>
+                            </ul>
                         </li>
                     {% else %}
                         <li class="nav-item"><a class="nav-link" href="{% url 'accounts:login' %}">Login</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'accounts:register' %}">Register</a></li>
+                        <li class="nav-item">
+                            <a class="btn btn-primary btn-sm ms-lg-2" href="{% url 'accounts:register' %}">Register</a>
+                        </li>
                     {% endif %}
                 </ul>
             </div>
@@ -55,13 +80,35 @@
         {% endfor %}
     </div>
 
-    <main class="container my-4">
+    <main class="container mm-main">
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="bg-dark text-light text-center py-3 mt-5">
+    <footer class="mm-footer">
         <div class="container">
-            <small>&copy; 2026 MultiMart — Multi-Vendor E-Commerce Demo</small>
+            <div class="row g-4">
+                <div class="col-6 col-md-3">
+                    <h6>MultiMart</h6>
+                    <p class="small" style="color:#94A3B8;">Your multi-vendor marketplace — quality products from trusted sellers.</p>
+                </div>
+                <div class="col-6 col-md-3">
+                    <h6>Shop</h6>
+                    <a href="{% url 'catalog:home' %}">All Products</a>
+                    <a href="{% url 'catalog:home' %}">New Arrivals</a>
+                </div>
+                <div class="col-6 col-md-3">
+                    <h6>Account</h6>
+                    <a href="{% url 'dashboard:redirect' %}">Dashboard</a>
+                    <a href="{% url 'orders:order_list' %}">My Orders</a>
+                </div>
+                <div class="col-6 col-md-3">
+                    <h6>Sell on MultiMart</h6>
+                    <a href="{% url 'accounts:register' %}">Become a Vendor</a>
+                </div>
+            </div>
+            <div class="mm-footer-bottom text-center">
+                &copy; 2026 MultiMart — Multi-Vendor E-Commerce Demo
+            </div>
         </div>
     </footer>
 
