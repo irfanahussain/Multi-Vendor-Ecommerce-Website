@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Request Return{% endblock %}
+{% block content %}
+<h4>Request a return</h4>
+<p class="text-muted">{{ order_item.product_name }} ({{ order_item.variant_name }}) &times; {{ order_item.quantity }}</p>
+<form method="post" class="card p-3" style="max-width:500px;">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button class="btn btn-warning" type="submit">Submit return request</button>
+    <a href="{% url 'orders:order_detail' order_item.vendor_order.order.order_number %}" class="btn btn-link">Cancel</a>
+</form>
+{% endblock %}

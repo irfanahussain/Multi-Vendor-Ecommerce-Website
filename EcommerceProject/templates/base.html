@@ -50,6 +50,7 @@
                                 <li><a class="dropdown-item" href="{% url 'dashboard:redirect' %}">Dashboard</a></li>
                                 {% if user.is_customer_role %}
                                 <li><a class="dropdown-item" href="{% url 'orders:order_list' %}">My Orders</a></li>
+                                <li><a class="dropdown-item" href="{% url 'returns:my_returns' %}">My Returns</a></li>
                                 {% endif %}
                                 <li><hr class="dropdown-divider"></li>
                                 <li>

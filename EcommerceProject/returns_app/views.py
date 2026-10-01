@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db.models import Sum
 from orders.models import OrderItem
 from .forms import ReturnRequestForm
 from .models import ReturnRequest
@@ -20,8 +21,14 @@ def request_return(request, order_item_id):
     if request.method == 'POST':
         form = ReturnRequestForm(request.POST)
         if form.is_valid():
-            if form.cleaned_data['quantity'] > order_item.quantity:
-                messages.error(request, "Return quantity can't exceed purchased quantity.")
+            already = order_item.return_requests.exclude(
+                status=ReturnRequest.Status.REJECTED
+            ).aggregate(total=Sum('quantity'))['total'] or 0
+            remaining = order_item.quantity - already
+            if form.cleaned_data['quantity'] < 1:
+                messages.error(request, "Return quantity must be at least 1.")
+            elif form.cleaned_data['quantity'] > remaining:
+                messages.error(request, f"You can return at most {remaining} more of this item.")
             else:
                 return_request = form.save(commit=False)
                 return_request.order_item = order_item

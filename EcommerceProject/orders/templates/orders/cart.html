@@ -21,7 +21,10 @@
             </td>
             <td>₹{{ item.line_total }}</td>
             <td>
-                <a href="{% url 'orders:cart_remove' item.id %}" class="btn btn-sm btn-outline-danger">Remove</a>
+                <form method="post" action="{% url 'orders:cart_remove' item.id %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                </form>
             </td>
         </tr>
     {% endfor %}
@@ -34,7 +37,10 @@
             {% if coupon %}
             <div class="d-flex justify-content-between">
                 <span>Coupon <strong>{{ coupon.code }}</strong> applied</span>
-                <a href="{% url 'orders:remove_coupon' %}" class="text-danger small">Remove</a>
+                <form method="post" action="{% url 'orders:remove_coupon' %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-link text-danger small p-0">Remove</button>
+                </form>
             </div>
             <p class="text-success">- ₹{{ discount }}</p>
             {% else %}

@@ -19,16 +19,21 @@
         <p><strong>Your earning: ₹{{ vendor_order.vendor_earning }}</strong></p>
     </div>
     <div class="col-md-4">
+        <p>Current status: <span class="badge bg-secondary">{{ vendor_order.get_status_display }}</span></p>
+        {% if next_statuses %}
         <form method="post">
             {% csrf_token %}
-            <label class="form-label">Update Status</label>
+            <label class="form-label">Move to</label>
             <select name="status" class="form-select mb-2">
-                {% for value, label in vendor_order.Status.choices %}
-                <option value="{{ value }}" {% if value == vendor_order.status %}selected{% endif %}>{{ label }}</option>
+                {% for value, label in next_statuses %}
+                <option value="{{ value }}">{{ label }}</option>
                 {% endfor %}
             </select>
             <button class="btn btn-primary">Update</button>
         </form>
+        {% else %}
+        <p class="text-muted">No further status changes are available.</p>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

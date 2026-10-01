@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}My Returns{% endblock %}
+{% block content %}
+<h4>My returns</h4>
+<table class="table bg-white">
+    <thead><tr><th>#</th><th>Product</th><th>Qty</th><th>Reason</th><th>Status</th><th>Refund</th><th>Date</th></tr></thead>
+    <tbody>
+    {% for r in returns %}
+        <tr>
+            <td>{{ r.id }}</td>
+            <td>{{ r.order_item.product_name }}</td>
+            <td>{{ r.quantity }}</td>
+            <td>{{ r.reason }}</td>
+            <td><span class="badge bg-secondary">{{ r.get_status_display }}</span></td>
+            <td>{% if r.refund %}&#8377;{{ r.refund.amount }} ({{ r.refund.get_status_display }}){% else %}-{% endif %}</td>
+            <td>{{ r.created_at|date:"M d, Y" }}</td>
+        </tr>
+    {% empty %}
+        <tr><td colspan="7" class="text-muted">You have no return requests.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

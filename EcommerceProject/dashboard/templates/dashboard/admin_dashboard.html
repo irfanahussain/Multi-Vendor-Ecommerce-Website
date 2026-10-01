@@ -23,8 +23,8 @@
                 <tr>
                     <td>{{ store.store_name }} <br><small class="text-muted">{{ store.vendor.username }}</small></td>
                     <td>
-                        <a href="{% url 'dashboard:approve_vendor' store.id %}" class="btn btn-sm btn-success">Approve</a>
-                        <a href="{% url 'dashboard:reject_vendor' store.id %}" class="btn btn-sm btn-danger">Reject</a>
+                        <form method="post" action="{% url 'dashboard:approve_vendor' store.id %}" class="d-inline">{% csrf_token %}<button type="submit" class="btn btn-sm btn-success">Approve</button></form>
+                        <form method="post" action="{% url 'dashboard:reject_vendor' store.id %}" class="d-inline">{% csrf_token %}<button type="submit" class="btn btn-sm btn-danger">Reject</button></form>
                     </td>
                 </tr>
             {% empty %}
@@ -41,8 +41,8 @@
                 <tr>
                     <td>{{ product.name }} <br><small class="text-muted">{{ product.vendor.username }}</small></td>
                     <td>
-                        <a href="{% url 'dashboard:approve_product' product.id %}" class="btn btn-sm btn-success">Approve</a>
-                        <a href="{% url 'dashboard:reject_product' product.id %}" class="btn btn-sm btn-danger">Reject</a>
+                        <form method="post" action="{% url 'dashboard:approve_product' product.id %}" class="d-inline">{% csrf_token %}<button type="submit" class="btn btn-sm btn-success">Approve</button></form>
+                        <form method="post" action="{% url 'dashboard:reject_product' product.id %}" class="d-inline">{% csrf_token %}<button type="submit" class="btn btn-sm btn-danger">Reject</button></form>
                     </td>
                 </tr>
             {% empty %}

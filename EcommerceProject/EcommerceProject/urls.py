@@ -27,6 +27,8 @@ urlpatterns = [
     path('orders/', include('orders.urls')),
     path('reviews/', include('reviews.urls')),
     path('dashboard/', include('dashboard.urls')),
+     path('returns/', include('returns_app.urls')),
+
 ]
 
 if settings.DEBUG:
