@@ -1,0 +1,21 @@
+<button class="btn btn-outline-secondary d-lg-none mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#dashNav">
+    <i class="bi bi-list"></i> Menu
+</button>
+<nav id="dashNav" class="collapse d-lg-block dash-sidebar">
+    {% if user.is_admin_role %}
+    <a class="dash-link {% if active == 'overview' %}active{% endif %}" href="{% url 'dashboard:admin_dashboard' %}"><i class="bi bi-speedometer2"></i> Overview</a>
+    <a class="dash-link" href="{% url 'dashboard:admin_dashboard' %}#approvals"><i class="bi bi-patch-check"></i> Approvals</a>
+    <div class="dash-group">Manage</div>
+    <a class="dash-link" href="{% url 'admin:catalog_category_changelist' %}"><i class="bi bi-diagram-3"></i> Categories</a>
+    <a class="dash-link" href="{% url 'admin:catalog_brand_changelist' %}"><i class="bi bi-bookmark-star"></i> Brands</a>
+    <a class="dash-link" href="{% url 'admin:orders_coupon_changelist' %}"><i class="bi bi-ticket-perforated"></i> Coupons</a>
+    <a class="dash-link" href="{% url 'admin:returns_app_returnrequest_changelist' %}"><i class="bi bi-arrow-return-left"></i> Returns</a>
+    <a class="dash-link" href="{% url 'admin:returns_app_refund_changelist' %}"><i class="bi bi-cash-coin"></i> Refunds</a>
+    <a class="dash-link" href="{% url 'admin:orders_vendororder_changelist' %}"><i class="bi bi-percent"></i> Commissions</a>
+    {% else %}
+    <a class="dash-link {% if active == 'overview' %}active{% endif %}" href="{% url 'vendors:dashboard' %}"><i class="bi bi-speedometer2"></i> Overview</a>
+    <a class="dash-link" href="{% url 'catalog:vendor_product_list' %}"><i class="bi bi-box-seam"></i> Products</a>
+    <a class="dash-link" href="{% url 'orders:vendor_order_list' %}"><i class="bi bi-receipt"></i> Orders</a>
+    <a class="dash-link" href="{% url 'vendors:store_settings' %}"><i class="bi bi-shop"></i> Store settings</a>
+    {% endif %}
+</nav>

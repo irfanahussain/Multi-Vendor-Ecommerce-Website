@@ -1,65 +1,103 @@
 {% extends "base.html" %}
 {% block title %}Admin Dashboard{% endblock %}
 {% block content %}
-<h4>Super Admin Dashboard</h4>
+<div class="row g-4">
+  <div class="col-lg-2">{% include "partials/dash_sidebar.html" with active="overview" %}</div>
+  <div class="col-lg-10">
+    <h4 class="mb-3">Platform overview</h4>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-2"><div class="dashboard-stat bg-primary"><h4>{{ total_vendors }}</h4>Vendors</div></div>
-    <div class="col-md-2"><div class="dashboard-stat bg-success"><h4>{{ total_customers }}</h4>Customers</div></div>
-    <div class="col-md-2"><div class="dashboard-stat bg-info"><h4>{{ total_products }}</h4>Products</div></div>
-    <div class="col-md-2"><div class="dashboard-stat bg-warning"><h4>{{ total_orders }}</h4>Orders</div></div>
-    <div class="col-md-2"><div class="dashboard-stat bg-dark"><h4>₹{{ total_sales }}</h4>Sales</div></div>
-    <div class="col-md-2"><div class="dashboard-stat bg-secondary"><h4>₹{{ total_commission }}</h4>Commission</div></div>
-</div>
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-xl-4"><div class="card kpi-card h-100"><div class="card-body d-flex justify-content-between">
+        <div><div class="kpi-label">Vendors</div><div class="kpi-value">{{ total_vendors }}</div><div class="kpi-sub">{{ pending_vendors }} awaiting approval</div></div>
+        <div class="kpi-icon"><i class="bi bi-shop"></i></div></div></div></div>
+      <div class="col-6 col-xl-4"><div class="card kpi-card h-100"><div class="card-body d-flex justify-content-between">
+        <div><div class="kpi-label">Customers</div><div class="kpi-value">{{ total_customers }}</div><div class="kpi-sub">Registered accounts</div></div>
+        <div class="kpi-icon"><i class="bi bi-people"></i></div></div></div></div>
+      <div class="col-6 col-xl-4"><div class="card kpi-card h-100"><div class="card-body d-flex justify-content-between">
+        <div><div class="kpi-label">Products</div><div class="kpi-value">{{ total_products }}</div><div class="kpi-sub">{{ pending_products }} awaiting approval</div></div>
+        <div class="kpi-icon"><i class="bi bi-box-seam"></i></div></div></div></div>
+      <div class="col-6 col-xl-4"><div class="card kpi-card h-100"><div class="card-body d-flex justify-content-between">
+        <div><div class="kpi-label">Orders</div><div class="kpi-value">{{ total_orders }}</div><div class="kpi-sub">All time</div></div>
+        <div class="kpi-icon"><i class="bi bi-receipt"></i></div></div></div></div>
+      <div class="col-6 col-xl-4"><div class="card kpi-card h-100"><div class="card-body d-flex justify-content-between">
+        <div><div class="kpi-label">Sales</div><div class="kpi-value">₹{{ total_sales }}</div><div class="kpi-sub">Order totals</div></div>
+        <div class="kpi-icon"><i class="bi bi-graph-up-arrow"></i></div></div></div></div>
+      <div class="col-6 col-xl-4"><div class="card kpi-card h-100"><div class="card-body d-flex justify-content-between">
+        <div><div class="kpi-label">Commission</div><div class="kpi-value">₹{{ total_commission }}</div><div class="kpi-sub">Earned by the platform</div></div>
+        <div class="kpi-icon"><i class="bi bi-percent"></i></div></div></div></div>
+    </div>
 
-<p><a href="/admin/" class="btn btn-outline-dark btn-sm">Open full Django Admin (deep management: coupons, promotions, refunds, categories, brands...)</a></p>
-
-<div class="row">
-    <div class="col-md-6">
-        <h6>Pending Vendor Approvals ({{ pending_vendors }})</h6>
-        <table class="table bg-white">
+    <div class="card mb-4" id="approvals">
+      <div class="card-header bg-white">
+        <ul class="nav nav-tabs card-header-tabs">
+          <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-vendors" type="button">
+            Pending vendors <span class="badge rounded-pill badge-pending" data-count="vendors">{{ pending_vendor_list|length }}</span></button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-products" type="button">
+            Pending products <span class="badge rounded-pill badge-pending" data-count="products">{{ pending_product_list|length }}</span></button></li>
+        </ul>
+      </div>
+      <div class="tab-content">
+        <div class="tab-pane fade show active" id="tab-vendors">
+          <div class="table-responsive"><table class="table align-middle mb-0">
+            <thead><tr><th>Store</th><th>Owner</th><th class="text-end">Decision</th></tr></thead>
             <tbody>
             {% for store in pending_vendor_list %}
-                <tr>
-                    <td>{{ store.store_name }} <br><small class="text-muted">{{ store.vendor.username }}</small></td>
-                    <td>
-                        <form method="post" action="{% url 'dashboard:approve_vendor' store.id %}" class="d-inline">{% csrf_token %}<button type="submit" class="btn btn-sm btn-success">Approve</button></form>
-                        <form method="post" action="{% url 'dashboard:reject_vendor' store.id %}" class="d-inline">{% csrf_token %}<button type="submit" class="btn btn-sm btn-danger">Reject</button></form>
-                    </td>
-                </tr>
+              <tr>
+                <td class="fw-semibold">{{ store.store_name }}</td>
+                <td class="text-muted">{{ store.vendor.username }}</td>
+                <td class="text-end text-nowrap">
+                  <form method="post" action="{% url 'dashboard:approve_vendor' store.id %}" class="d-inline js-ajax-form" data-modal="Approve {{ store.store_name }}?" data-ok="Vendor approved" data-count="vendors" data-success="remove-row">{% csrf_token %}<button type="submit" class="btn btn-sm btn-success">Approve</button></form>
+                  <form method="post" action="{% url 'dashboard:reject_vendor' store.id %}" class="d-inline js-ajax-form" data-modal="Reject {{ store.store_name }}?" data-ok="Vendor rejected" data-count="vendors" data-success="remove-row" data-danger="1">{% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-danger">Reject</button></form>
+                </td>
+              </tr>
             {% empty %}
-                <tr><td class="text-muted">No pending vendors.</td></tr>
+              <tr class="empty-row"><td colspan="3" class="text-center text-muted py-4">No vendors waiting for approval.</td></tr>
             {% endfor %}
             </tbody>
-        </table>
-    </div>
-    <div class="col-md-6">
-        <h6>Pending Product Approvals</h6>
-        <table class="table bg-white">
+          </table></div>
+        </div>
+        <div class="tab-pane fade" id="tab-products">
+          <div class="table-responsive"><table class="table align-middle mb-0">
+            <thead><tr><th>Product</th><th>Vendor</th><th>Price</th><th class="text-end">Decision</th></tr></thead>
             <tbody>
             {% for product in pending_product_list %}
-                <tr>
-                    <td>{{ product.name }} <br><small class="text-muted">{{ product.vendor.username }}</small></td>
-                    <td>
-                        <form method="post" action="{% url 'dashboard:approve_product' product.id %}" class="d-inline">{% csrf_token %}<button type="submit" class="btn btn-sm btn-success">Approve</button></form>
-                        <form method="post" action="{% url 'dashboard:reject_product' product.id %}" class="d-inline">{% csrf_token %}<button type="submit" class="btn btn-sm btn-danger">Reject</button></form>
-                    </td>
-                </tr>
+              <tr>
+                <td class="fw-semibold">{{ product.name }}</td>
+                <td class="text-muted">{{ product.vendor.username }}</td>
+                <td>₹{{ product.display_price }}</td>
+                <td class="text-end text-nowrap">
+                  <form method="post" action="{% url 'dashboard:approve_product' product.id %}" class="d-inline js-ajax-form" data-modal="Approve {{ product.name }}?" data-ok="Product approved" data-count="products" data-success="remove-row">{% csrf_token %}<button type="submit" class="btn btn-sm btn-success">Approve</button></form>
+                  <form method="post" action="{% url 'dashboard:reject_product' product.id %}" class="d-inline js-ajax-form" data-modal="Reject {{ product.name }}?" data-ok="Product rejected" data-count="products" data-success="remove-row" data-danger="1">{% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-danger">Reject</button></form>
+                </td>
+              </tr>
             {% empty %}
-                <tr><td class="text-muted">No pending products.</td></tr>
+              <tr class="empty-row"><td colspan="4" class="text-center text-muted py-4">No products waiting for approval.</td></tr>
             {% endfor %}
             </tbody>
-        </table>
+          </table></div>
+        </div>
+      </div>
     </div>
+
+    <div class="card">
+      <div class="card-header bg-white fw-semibold">Recent orders</div>
+      <div class="table-responsive"><table class="table align-middle mb-0">
+        <thead><tr><th>Order</th><th>Customer</th><th>Total</th><th>Date</th></tr></thead>
+        <tbody>
+        {% for order in recent_orders %}
+          <tr><td>{{ order.order_number }}</td><td>{{ order.customer.username }}</td><td>₹{{ order.total_amount }}</td><td>{{ order.created_at|date:"M d, Y" }}</td></tr>
+        {% empty %}
+          <tr><td colspan="4" class="text-center text-muted py-4">No orders yet.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+    </div>
+  </div>
 </div>
 
-<h6 class="mt-3">Recent Orders</h6>
-<table class="table bg-white">
-    <thead><tr><th>Order #</th><th>Customer</th><th>Total</th><th>Date</th></tr></thead>
-    <tbody>
-    {% for order in recent_orders %}
-        <tr><td>{{ order.order_number }}</td><td>{{ order.customer.username }}</td><td>₹{{ order.total_amount }}</td><td>{{ order.created_at|date:"M d, Y" }}</td></tr>
-    {% endfor %}
-    </tbody>
-</table>
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title" id="confirmTitle"></h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+  <div class="modal-body text-muted">This takes effect immediately.</div>
+  <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button><button type="button" id="confirmOk" class="btn btn-primary">Confirm</button></div>
+</div></div></div>
 {% endblock %}

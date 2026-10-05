@@ -1,0 +1,27 @@
+    <footer class="mm-footer">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-6 col-md-3">
+                    <h6>MultiMart</h6>
+                    <p class="small" style="color:#94A3B8;">Your multi-vendor marketplace — quality products from trusted sellers.</p>
+                </div>
+                <div class="col-6 col-md-3">
+                    <h6>Shop</h6>
+                    <a href="{% url 'catalog:home' %}">All Products</a>
+                    <a href="{% url 'catalog:home' %}?sort=newest">New Arrivals</a>
+                </div>
+                <div class="col-6 col-md-3">
+                    <h6>Account</h6>
+                    <a href="{% url 'dashboard:redirect' %}">Dashboard</a>
+                    <a href="{% url 'orders:order_list' %}">My Orders</a>
+                </div>
+                <div class="col-6 col-md-3">
+                    <h6>Sell on MultiMart</h6>
+                    <a href="{% url 'accounts:register' %}">Become a Vendor</a>
+                </div>
+            </div>
+            <div class="mm-footer-bottom text-center">
+                &copy; 2026 MultiMart — Multi-Vendor E-Commerce Demo
+            </div>
+        </div>
+    </footer>

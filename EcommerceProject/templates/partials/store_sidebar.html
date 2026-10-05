@@ -1,0 +1,44 @@
+{% with page=request.resolver_match.url_name %}
+<button class="btn btn-outline-secondary btn-sm d-lg-none mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#storeNav"><i class="bi bi-list"></i> Browse menu</button>
+<nav id="storeNav" class="mm-ss collapse d-lg-block" aria-label="Store navigation">
+    <a class="mm-ss-link {% if page == 'landing' %}active{% endif %}" href="{% url 'catalog:landing' %}"><i class="bi bi-house-door"></i> Home</a>
+
+    <a class="mm-ss-link mm-ss-toggle {% if request.GET.category %}active{% endif %}" data-bs-toggle="collapse" href="#ssCats" role="button" aria-expanded="{% if request.GET.category %}true{% else %}false{% endif %}">
+        <i class="bi bi-grid"></i> Categories <i class="bi bi-chevron-down ms-auto small"></i></a>
+    <div id="ssCats" class="collapse {% if request.GET.category %}show{% endif %}">
+        {% for c in nav_categories %}<a class="mm-ss-sub {% if request.GET.category == c.slug %}active{% endif %}" href="{% url 'catalog:home' %}?category={{ c.slug }}">{{ c.name }}</a>{% endfor %}
+    </div>
+
+    <a class="mm-ss-link {% if request.GET.sort == 'newest' %}active{% endif %}" href="{% url 'catalog:home' %}?sort=newest"><i class="bi bi-stars"></i> New Arrivals</a>
+    <a class="mm-ss-link" href="{% url 'catalog:landing' %}#best-sellers"><i class="bi bi-award"></i> Best Sellers</a>
+
+    <a class="mm-ss-link mm-ss-toggle {% if request.GET.brand %}active{% endif %}" data-bs-toggle="collapse" href="#ssBrands" role="button" aria-expanded="{% if request.GET.brand %}true{% else %}false{% endif %}">
+        <i class="bi bi-gem"></i> Brands <i class="bi bi-chevron-down ms-auto small"></i></a>
+    <div id="ssBrands" class="collapse {% if request.GET.brand %}show{% endif %}">
+        {% for b in nav_brands %}<a class="mm-ss-sub" href="{% url 'catalog:home' %}?brand={{ b.id }}">{{ b.name }}</a>{% endfor %}
+    </div>
+
+    <hr class="mm-ss-hr">
+    {% if user.is_authenticated %}
+        {% if user.is_customer_role %}
+        <a class="mm-ss-link {% if page == 'cart' %}active{% endif %}" href="{% url 'orders:cart' %}"><i class="bi bi-bag"></i> My Cart {% if cart_item_count %}<span class="badge rounded-pill bg-primary ms-auto">{{ cart_item_count }}</span>{% endif %}</a>
+        <a class="mm-ss-link {% if page == 'order_list' %}active{% endif %}" href="{% url 'orders:order_list' %}"><i class="bi bi-receipt"></i> My Orders {% if active_order_count %}<span class="badge rounded-pill bg-primary ms-auto">{{ active_order_count }}</span>{% endif %}</a>
+        <a class="mm-ss-link" href="{% url 'returns:my_returns' %}"><i class="bi bi-arrow-return-left"></i> My Returns</a>
+        {% else %}
+        <a class="mm-ss-link" href="{% url 'dashboard:redirect' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+        {% endif %}
+        <a class="mm-ss-link" href="{% url 'accounts:profile' %}"><i class="bi bi-person-gear"></i> Account &amp; Addresses</a>
+    {% else %}
+        <a class="mm-ss-link" href="{% url 'accounts:login' %}"><i class="bi bi-box-arrow-in-right"></i> Login</a>
+        <a class="mm-ss-link" href="{% url 'accounts:register' %}"><i class="bi bi-person-plus"></i> Register</a>
+    {% endif %}
+
+    {% if not user.is_authenticated or user.is_customer_role %}
+    <div class="mm-ss-promo">
+        <small>SELL WITH US</small>
+        <strong>Open your own store</strong>
+        <a href="{% url 'accounts:register' %}" class="btn btn-light btn-sm mt-2">Become a vendor</a>
+    </div>
+    {% endif %}
+</nav>
+{% endwith %}

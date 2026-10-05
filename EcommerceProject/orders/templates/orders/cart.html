@@ -1,60 +1,95 @@
 {% extends "base.html" %}
+{% block shell_class %}with-sidebar{% endblock %}
+{% load cart_extras %}
 {% block title %}Your Cart{% endblock %}
 {% block content %}
-<h4>Your Cart</h4>
-{% if cart.items.all %}
-<table class="table bg-white">
-    <thead><tr><th>Product</th><th>Price</th><th>Quantity</th><th>Total</th><th></th></tr></thead>
-    <tbody>
-    {% for item in cart.items.all %}
-        <tr>
-            <td>{{ item.variant.product.name }} <br><small class="text-muted">{{ item.variant.name }}</small></td>
-            <td>₹{{ item.variant.effective_price }}</td>
-            <td style="max-width:140px;">
-                <form method="post" action="{% url 'orders:cart_update' item.id %}" class="d-flex qty-stepper input-group">
-                    {% csrf_token %}
-                    <button type="button" class="btn btn-outline-secondary btn-sm qty-minus">-</button>
-                    <input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ item.variant.stock_quantity }}" class="form-control form-control-sm text-center">
-                    <button type="button" class="btn btn-outline-secondary btn-sm qty-plus">+</button>
-                    <button type="submit" class="btn btn-primary btn-sm">Update</button>
-                </form>
-            </td>
-            <td>₹{{ item.line_total }}</td>
-            <td>
-                <form method="post" action="{% url 'orders:cart_remove' item.id %}" class="d-inline">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
-                </form>
-            </td>
-        </tr>
-    {% endfor %}
-    </tbody>
-</table>
+<div class="d-flex justify-content-between align-items-end mb-3">
+    <h4 class="mb-0">Your Cart {% if cart.items.all %}<span class="text-muted fs-6">({{ cart.total_items }} item{{ cart.total_items|pluralize }})</span>{% endif %}</h4>
+    <a href="{% url 'catalog:home' %}" class="small text-decoration-none"><i class="bi bi-arrow-left"></i> Continue shopping</a>
+</div>
 
-<div class="row">
-    <div class="col-md-5 offset-md-7">
-        <div class="card p-3">
-            {% if coupon %}
-            <div class="d-flex justify-content-between">
-                <span>Coupon <strong>{{ coupon.code }}</strong> applied</span>
-                <form method="post" action="{% url 'orders:remove_coupon' %}" class="d-inline">
+{% if cart.items.all %}
+<div class="row g-4 align-items-start">
+  <div class="col-lg-8">
+    {% for g in cart.items.all|group_by_vendor %}
+    <div class="card mb-3 overflow-hidden">
+        <div class="vendor-banner d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-shop me-1"></i> <strong>{{ g.vendor.store.store_name|default:g.vendor.username }}</strong></span>
+            <span class="small text-muted">Store subtotal <strong>₹{{ g.subtotal }}</strong></span>
+        </div>
+
+        {% for item in g.lines %}
+        {% with v=item.variant %}
+        <div class="cart-item">
+            <a class="cart-thumb" href="{{ v.product.get_absolute_url }}">
+                {% if v.image %}<img src="{{ v.image.url }}" alt="{{ v.product.name }}">
+                {% elif v.product.image %}<img src="{{ v.product.image.url }}" alt="{{ v.product.name }}">
+                {% else %}<i class="bi bi-image"></i>{% endif %}
+            </a>
+
+            <div class="cart-info">
+                <a class="cart-name" href="{{ v.product.get_absolute_url }}">{{ v.product.name }}</a>
+                {% if v.name != 'Default' %}<div class="small text-muted">Option: {{ v.name }}</div>{% endif %}
+                <div class="small">
+                    ₹{{ v.effective_price }}
+                    {% if v.product.discount_price and not v.price %}<s class="text-muted ms-1">₹{{ v.product.price }}</s>{% endif %}
+                    <span class="text-muted">each</span>
+                </div>
+                {% if item.quantity > v.stock_quantity %}
+                    <span class="badge rounded-pill badge-rejected mt-1">Only {{ v.stock_quantity }} available</span>
+                {% elif v.stock_quantity <= 5 %}
+                    <span class="badge rounded-pill badge-pending mt-1">Only {{ v.stock_quantity }} left!</span>
+                {% endif %}
+            </div>
+
+            <div class="cart-actions">
+                <form method="post" action="{% url 'orders:cart_update' item.id %}" class="cart-qty qty-stepper">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-link text-danger small p-0">Remove</button>
+                    <button type="button" class="qty-minus" aria-label="Decrease">−</button>
+                    <input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ v.stock_quantity }}" aria-label="Quantity">
+                    <button type="button" class="qty-plus" aria-label="Increase">+</button>
+                    <button type="submit" class="cart-update">Update</button>
+                </form>
+                <div class="cart-line">₹{{ item.line_total }}</div>
+                <form method="post" action="{% url 'orders:cart_remove' item.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-link text-danger small p-0 text-decoration-none"><i class="bi bi-trash"></i> Remove</button>
                 </form>
             </div>
-            <p class="text-success">- ₹{{ discount }}</p>
-            {% else %}
-            <form method="post" action="{% url 'orders:apply_coupon' %}" class="d-flex gap-2 mb-2">
-                {% csrf_token %}
-                <input type="text" name="code" class="form-control" placeholder="Coupon code">
-                <button class="btn btn-outline-primary" type="submit">Apply</button>
-            </form>
-            {% endif %}
-            <div class="d-flex justify-content-between"><span>Subtotal</span><strong>₹{{ cart.subtotal }}</strong></div>
-            <a href="{% url 'orders:checkout' %}" class="btn btn-primary w-100 mt-3">Proceed to Checkout</a>
         </div>
+        {% endwith %}
+        {% endfor %}
     </div>
+    {% endfor %}
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card p-3 cart-summary">
+        <h6 class="mb-3">Order summary</h6>
+        <div class="d-flex justify-content-between mb-2"><span class="text-muted">Subtotal ({{ cart.total_items }} item{{ cart.total_items|pluralize }})</span><strong>₹{{ cart.subtotal }}</strong></div>
+
+        {% if coupon %}
+        <div class="d-flex justify-content-between align-items-center mb-2 text-success">
+            <span><i class="bi bi-ticket-perforated"></i> {{ coupon.code }}
+                <form method="post" action="{% url 'orders:remove_coupon' %}" class="d-inline">{% csrf_token %}
+                    <button type="submit" class="btn btn-link text-danger small p-0 ms-1 text-decoration-none">Remove</button></form>
+            </span>
+            <strong>− ₹{{ discount }}</strong>
+        </div>
+        {% else %}
+        <form method="post" action="{% url 'orders:apply_coupon' %}" class="d-flex gap-2 my-2">
+            {% csrf_token %}
+            <input type="text" name="code" class="form-control" placeholder="Promo code">
+            <button class="btn btn-outline-primary" type="submit">Apply</button>
+        </form>
+        {% endif %}
+
+        <div class="small text-muted border-top pt-2 mt-2">Tax and shipping are calculated at checkout. Each store ships its own items.</div>
+        <a href="{% url 'orders:checkout' %}" class="btn btn-primary w-100 mt-3 py-2"><i class="bi bi-lock"></i> Proceed to Checkout</a>
+    </div>
+  </div>
 </div>
+
 {% else %}
 <div class="mm-empty card">
     <div class="mm-empty-icon">

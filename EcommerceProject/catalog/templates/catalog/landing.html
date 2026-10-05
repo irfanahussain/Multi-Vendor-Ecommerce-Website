@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block shell_class %}with-sidebar{% endblock %}
+{% block title %}MultiMart — Everything you need, from trusted sellers{% endblock %}
+{% block content %}
+<div class="lp">
+
+  <section class="lp-hero">
+    <div class="row align-items-center g-4">
+      <div class="col-md-6">
+        <div class="lp-eyebrow">Shop. Compare. Enjoy.</div>
+        <h1 class="lp-title">Everything You Need,<br><span>All in One Place.</span></h1>
+        <p class="text-muted">Discover quality products from trusted vendors, all in a single cart.</p>
+        <div class="d-flex flex-wrap gap-2">
+          <a href="{% url 'catalog:home' %}" class="btn btn-primary px-4">Shop now</a>
+          <a href="{% url 'catalog:home' %}?sort=newest" class="btn btn-outline-primary px-4">Explore collection</a>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="lp-hero-art">
+          {% if hero_product.image %}<img src="{{ hero_product.image.url }}" alt="{{ hero_product.name }}">
+          {% else %}<i class="bi bi-bag-heart"></i>{% endif %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="lp-trust">
+    <div><i class="bi bi-truck"></i><div><strong>Free shipping</strong><span>On orders over ₹{{ free_shipping|floatformat:0 }}</span></div></div>
+    <div><i class="bi bi-shop"></i><div><strong>Approved vendors</strong><span>Every store is reviewed</span></div></div>
+    <div><i class="bi bi-arrow-repeat"></i><div><strong>Easy returns</strong><span>Request from My Returns</span></div></div>
+    <div><i class="bi bi-box-seam"></i><div><strong>Split orders</strong><span>Each store ships its own items</span></div></div>
+  </section>
+
+  <section class="lp-section">
+    <h2 class="lp-h">Shop by category</h2>
+    <div class="lp-cats">
+      {% for c in categories %}
+      <a href="{% url 'catalog:home' %}?category={{ c.slug }}" class="lp-cat">
+        <span class="lp-cat-img">{% if c.image %}<img src="{{ c.image.url }}" alt="">{% else %}<i class="bi bi-grid"></i>{% endif %}</span>
+        <strong>{{ c.name }}</strong><small>Shop now</small>
+      </a>
+      {% empty %}<p class="text-muted">Categories will appear here once they are added.</p>{% endfor %}
+    </div>
+  </section>
+
+  <section class="lp-section" id="best-sellers">
+    <div class="d-flex justify-content-between align-items-end mb-3">
+      <h2 class="lp-h mb-0">Best sellers</h2>
+      <a href="{% url 'catalog:home' %}" class="small fw-semibold text-decoration-none">View all <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="lp-rail-wrap">
+      <button class="lp-arrow lp-arrow-l" type="button" data-rail="-1" aria-label="Scroll left"><i class="bi bi-chevron-left"></i></button>
+      <div class="lp-rail" id="rail">
+        {% for p in best_sellers %}
+        <a href="{{ p.get_absolute_url }}" class="lp-card">
+          <span class="lp-card-img">{% if p.image %}<img src="{{ p.image.url }}" alt="{{ p.name }}" loading="lazy">{% else %}<i class="bi bi-image"></i>{% endif %}
+            {% if p.discount_percent %}<span class="badge rounded-pill bg-danger">{{ p.discount_percent }}% off</span>{% endif %}</span>
+          <span class="lp-card-name">{{ p.name }}</span>
+          <span class="small text-muted">{{ p.vendor.store.store_name|default:p.vendor.username }}</span>
+          <span class="stars small">{% for i in "12345" %}<i class="bi bi-star{% if forloop.counter <= p.average_rating %}-fill{% endif %}"></i>{% endfor %}</span>
+          <span><strong>₹{{ p.display_price }}</strong>{% if p.discount_price %} <s class="text-muted small">₹{{ p.price }}</s>{% endif %}</span>
+        </a>
+        {% empty %}<p class="text-muted">No products yet. Approve products from the admin dashboard to show them here.</p>{% endfor %}
+      </div>
+      <button class="lp-arrow lp-arrow-r" type="button" data-rail="1" aria-label="Scroll right"><i class="bi bi-chevron-right"></i></button>
+    </div>
+  </section>
+
+  <section class="row g-3 lp-section">
+    <div class="col-12"><div class="lp-promo lp-promo-b">
+      <small>NEW ARRIVALS</small>
+      <h3>Fresh items,<br>endless choice</h3>
+      <p>Explore the latest additions.</p>
+      <a href="{% url 'catalog:home' %}?sort=newest" class="btn btn-outline-primary btn-sm">Discover now</a>
+    </div></div>
+  </section>
+</div>
+{% endblock %}
+{% block footer %}{% include "partials/footer.html" %}{% endblock %}

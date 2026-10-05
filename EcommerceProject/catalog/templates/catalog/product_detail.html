@@ -1,53 +1,57 @@
 {% extends "base.html" %}
 {% block title %}{{ product.name }} — MultiMart{% endblock %}
 {% block content %}
-<div class="row">
+<div class="row g-4">
     <div class="col-md-5">
-        {% if product.image %}
-        <img src="{{ product.image.url }}" class="img-fluid rounded" alt="{{ product.name }}">
-        {% else %}
-        <div class="bg-light d-flex align-items-center justify-content-center rounded" style="height:350px;">No image</div>
-        {% endif %}
+        <div class="zoom-wrap" id="zoomWrap">
+            {% if product.image %}<img id="mainImage" src="{{ product.image.url }}" alt="{{ product.name }}">
+            {% else %}<div class="product-noimg"><i class="bi bi-image"></i></div>{% endif %}
+        </div>
+        <div class="d-flex gap-2 mt-2 flex-wrap">
+            {% if product.image %}<img class="thumb" data-thumb="{{ product.image.url }}" src="{{ product.image.url }}" alt="">{% endif %}
+            {% for v in variants %}{% if v.image %}<img class="thumb" data-thumb="{{ v.image.url }}" src="{{ v.image.url }}" alt="{{ v.name }}">{% endif %}{% endfor %}
+        </div>
     </div>
     <div class="col-md-7">
         <h3>{{ product.name }}</h3>
-        <p class="text-muted">Sold by
-            <a href="{% url 'vendors:store_public' product.vendor.store.id %}">{{ product.vendor.store.store_name }}</a>
-        </p>
-        <p class="stars">{% for i in "12345" %}{% if forloop.counter <= product.average_rating %}★{% else %}☆{% endif %}{% endfor %}
-            <span class="text-muted">({{ product.reviews.count }} reviews)</span>
-        </p>
-        <h4>
-            ₹{{ product.display_price }}
-            {% if product.discount_price %}
-                <span class="price-strike">₹{{ product.price }}</span>
-                <span class="badge bg-success">{{ product.discount_percent }}% off</span>
-            {% endif %}
+        {% if product.vendor.store %}<p class="text-muted">Sold by <a href="{% url 'vendors:store_public' product.vendor.store.id %}">{{ product.vendor.store.store_name }}</a></p>{% endif %}
+        <p class="stars">{% for i in "12345" %}<i class="bi bi-star{% if forloop.counter <= product.average_rating %}-fill{% endif %}"></i>{% endfor %}
+            <span class="text-muted small">({{ product.reviews.count }} reviews)</span></p>
+        <h4 class="d-flex align-items-center gap-2">
+            <span id="variantPrice">₹{{ variants.0.effective_price|default:product.display_price }}</span>
+            <span id="variantOld" class="price-strike fs-6">{% if product.discount_price and not variants.0.price %}₹{{ product.price }}{% endif %}</span>
+            {% if product.discount_price %}<span class="badge bg-success">{{ product.discount_percent }}% off</span>{% endif %}
         </h4>
         <p>{{ product.short_description }}</p>
 
+        {% if variants %}
+        <div class="mb-2"><span id="variantStock" class="badge rounded-pill"></span></div>
         {% if user.is_authenticated and user.is_customer_role %}
         <form method="post" action="{% url 'orders:cart_add' variants.0.id %}" id="addToCartForm">
             {% csrf_token %}
-            {% if variants.count > 1 %}
             <div class="mb-3">
-                <label class="form-label">Select variant</label>
-                <select name="variant" class="form-select" id="variantSelect" onchange="document.getElementById('addToCartForm').action = '/orders/cart/add/' + this.value + '/';">
-                    {% for v in variants %}
-                    <option value="{{ v.id }}">{{ v.name }} — ₹{{ v.effective_price }} ({{ v.stock_quantity }} in stock)</option>
-                    {% endfor %}
-                </select>
+                <label class="form-label d-block">Choose option</label>
+                {% for v in variants %}
+                <input type="radio" class="btn-check" name="variant" id="var{{ v.id }}" value="{{ v.id }}" autocomplete="off"
+                       data-price="₹{{ v.effective_price }}" data-old="{% if product.discount_price and not v.price %}₹{{ product.price }}{% endif %}"
+                       data-stock="{{ v.stock_quantity }}" data-image="{% if v.image %}{{ v.image.url }}{% endif %}"
+                       data-action="{% url 'orders:cart_add' v.id %}" {% if forloop.first %}checked{% endif %}>
+                <label class="btn btn-outline-primary btn-sm me-1 mb-1" for="var{{ v.id }}">{{ v.name }}</label>
+                {% endfor %}
             </div>
-            {% endif %}
             <div class="qty-stepper input-group mb-3" style="max-width:150px;">
                 <button type="button" class="btn btn-outline-secondary qty-minus">-</button>
-                <input type="number" name="quantity" value="1" min="1" class="form-control text-center">
+                <input type="number" name="quantity" value="1" min="1" max="{{ variants.0.stock_quantity }}" class="form-control text-center">
                 <button type="button" class="btn btn-outline-secondary qty-plus">+</button>
             </div>
-            <button type="submit" class="btn btn-primary">Add to Cart</button>
+            <button type="submit" class="btn btn-primary" id="addToCart"><i class="bi bi-bag-plus"></i> Add to cart</button>
         </form>
         {% elif not user.is_authenticated %}
+        <div class="mb-3">{% for v in variants %}<span class="badge text-bg-light border">{{ v.name }}</span> {% endfor %}</div>
         <a href="{% url 'accounts:login' %}" class="btn btn-primary">Login to buy</a>
+        {% endif %}
+        {% else %}
+        <div class="alert alert-secondary">This product is not available to order right now.</div>
         {% endif %}
 
         <hr>

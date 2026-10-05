@@ -5,7 +5,8 @@ from django.db.models import Sum,Count
 from .models import VendorStore
 from .decorators import vendor_required
 from .forms import VendorStoreForm
-from catalog.models import Product
+from catalog.models import Product,ProductVariant
+from orders.models import VendorOrder
 
 # Create your views here.
 
@@ -32,6 +33,18 @@ def vendor_dashboard(request):
         'total_products':products.count(),
         'low_stock_count':sum(1 for p in products if p.total_stock()<=5),
     }
+    vos=VendorOrder.objects.filter(vendor=request.user)
+    live=vos.exclude(status__in=['cancelled','returned','refunded'])
+    agg=live.aggregate(s=Sum('subtotal'),c=Sum('commission_amount'),e=Sum('vendor_earning'))
+    context.update({
+        'total_orders':vos.count(),
+        'pending_orders':vos.filter(status='pending').count(),
+        'total_sales':agg['s'] or 0,
+        'total_commission':agg['c'] or 0,
+        'net_earnings':agg['e'] or 0,
+        'recent_orders':vos.select_related('order').order_by('-created_at')[:8],
+        'inventory':ProductVariant.objects.filter(product__vendor=request.user,is_active=True).select_related('product').order_by('stock_quantity')[:15],
+    })
     return render(request,'vendors/dashboard.html',context)
 
 def store_public_view(request,store_id):

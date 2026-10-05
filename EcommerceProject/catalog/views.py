@@ -1,11 +1,28 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import Q,Sum,F
+from django.http import Http404
 from django.core.paginator import Paginator
 from .models import Product,Category,Brand,ProductVariant,StockHistory
 from .forms import ProductForm,ProductVariantForm,StockAdjustForm
 from vendors.decorators import vendor_required
+
+def landing(request):
+    from orders.views import FREE_SHIPPING_THRESHOLD
+    active=Product.objects.filter(status=Product.Status.ACTIVE).select_related('vendor','category')
+    best=list(active.annotate(sold=Sum('variants__orderitem__quantity')).order_by(F('sold').desc(nulls_last=True),'-created_at')[:12])
+    def pct(p):
+        d=p.discount_percent
+        return d() if callable(d) else (d or 0)
+    max_discount=max([pct(p) for p in active.filter(discount_price__isnull=False)[:100]] or [0])
+    return render(request,'catalog/landing.html',{
+        'categories':Category.objects.filter(is_active=True,parent=None)[:7],
+        'best_sellers':best,
+        'hero_product':best[0] if best else None,
+        'max_discount':max_discount,
+        'free_shipping':FREE_SHIPPING_THRESHOLD,
+    })
 
 def home(request):
     products=Product.objects.filter(status=Product.Status.ACTIVE)
@@ -15,6 +32,8 @@ def home(request):
     min_price=request.GET.get('min_price','')
     max_price=request.GET.get('max_price','')
     sort=request.GET.get('sort','')
+    if request.GET.get('deals'):
+        products=products.filter(discount_price__isnull=False)
     if query:
         products=products.filter(Q(name__icontains=query)|Q(description__icontains=query))
     if category_slug:
@@ -48,6 +67,9 @@ def home(request):
 
 def product_detail(request,slug):
     product=get_object_or_404(Product,slug=slug)
+    u=request.user
+    if product.status!=Product.Status.ACTIVE and not (u.is_authenticated and (u.is_admin_role or product.vendor_id==u.id)):
+        raise Http404
     variants=product.variants.filter(is_active=True)
     related=Product.objects.filter(category=product.category,status=Product.Status.ACTIVE).exclude(pk=product.pk)[:4]
     reviews=product.reviews.filter(is_hidden=False).order_by('-created_at')
@@ -129,7 +151,7 @@ def vendor_product_variants(request,pk):
     else:
         form=ProductVariantForm()
     variants=product.variants.all()
-    return render(request,'vendor_product_variants.html',{
+    return render(request,'catalog/vendor_product_variants.html',{
         'product':product,
         'variants':variants,
         'form':form,

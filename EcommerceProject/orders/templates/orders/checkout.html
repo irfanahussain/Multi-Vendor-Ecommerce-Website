@@ -1,50 +1,62 @@
 {% extends "base.html" %}
+{% load cart_extras %}
 {% block title %}Checkout{% endblock %}
 {% block content %}
-<h4>Checkout</h4>
-<div class="row">
-    <div class="col-md-7">
-        <div class="card p-3 mb-3">
-            <h6>1. Delivery Address</h6>
-            {% if addresses %}
-            <form method="post">
-                {% csrf_token %}
+<h4 class="mb-3">Checkout</h4>
+<ol class="stepper" id="stepper">
+    <li class="active" data-step="1"><span>1</span> Address</li>
+    <li data-step="2"><span>2</span> Order review</li>
+    <li data-step="3"><span>3</span> Payment</li>
+</ol>
+<div class="row g-4">
+    <div class="col-lg-7">
+        {% if addresses %}
+        <form method="post" id="checkoutForm">
+            {% csrf_token %}
+            <div class="card p-3 mb-3 checkout-step active" data-step="1">
+                <h6>Delivery address</h6>
                 {% for addr in addresses %}
-                <div class="form-check border rounded p-2 mb-2">
+                <div class="form-check border rounded p-2 mb-2 ps-5">
                     <input class="form-check-input" type="radio" name="address_id" value="{{ addr.id }}" id="addr{{ addr.id }}" {% if forloop.first %}checked{% endif %} required>
-                    <label class="form-check-label" for="addr{{ addr.id }}">
-                        <strong>{{ addr.full_name }}</strong> — {{ addr.phone }}<br>
-                        {{ addr.address_line }}, {{ addr.city }}, {{ addr.state }} - {{ addr.pincode }}
-                    </label>
+                    <label class="form-check-label" for="addr{{ addr.id }}"><strong>{{ addr.full_name }}</strong> — {{ addr.phone }}<br>
+                        {{ addr.address_line }}, {{ addr.city }}, {{ addr.state }} - {{ addr.pincode }}</label>
                 </div>
                 {% endfor %}
-
-                <h6 class="mt-3">2. Payment Method</h6>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="payment_method" value="cod" id="cod" checked>
-                    <label class="form-check-label" for="cod">Cash on Delivery</label>
-                </div>
-                <div class="form-check mb-3">
-                    <input class="form-check-input" type="radio" name="payment_method" value="online" id="online">
-                    <label class="form-check-label" for="online">Online Payment (demo — instantly marked paid)</label>
-                </div>
-
-                <button type="submit" class="btn btn-primary w-100">Place Order</button>
-            </form>
-            {% else %}
-            <p class="text-muted">You have no saved addresses.</p>
-            <a href="{% url 'accounts:address_add' %}?next={% url 'orders:checkout' %}" class="btn btn-outline-primary">Add Address</a>
-            {% endif %}
-        </div>
-    </div>
-    <div class="col-md-5">
-        <div class="card p-3">
-            <h6>Order Summary</h6>
-            {% for item in cart.items.all %}
-            <div class="d-flex justify-content-between small">
-                <span>{{ item.variant.product.name }} x{{ item.quantity }}</span>
-                <span>₹{{ item.line_total }}</span>
+                <a href="{% url 'accounts:address_add' %}?next={% url 'orders:checkout' %}" class="small mb-3">+ Add another address</a>
+                <button type="button" class="btn btn-primary step-next">Continue to review</button>
             </div>
+
+            <div class="card p-3 mb-3 checkout-step" data-step="2">
+                <h6>Review your orders</h6>
+                <p class="small text-muted">Items ship separately from each store.</p>
+                {% for g in cart.items.all|group_by_vendor %}
+                <div class="mb-3">
+                    <div class="vendor-banner mb-2"><i class="bi bi-shop me-1"></i> <strong>{{ g.vendor.store.store_name|default:g.vendor.username }}</strong></div>
+                    {% for item in g.lines %}
+                    <div class="d-flex justify-content-between small px-2"><span>{{ item.variant.product.name }} ({{ item.variant.name }}) × {{ item.quantity }}</span><span>₹{{ item.line_total }}</span></div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+                <div class="d-flex gap-2"><button type="button" class="btn btn-light step-prev">Back</button><button type="button" class="btn btn-primary step-next">Continue to payment</button></div>
+            </div>
+
+            <div class="card p-3 mb-3 checkout-step" data-step="3">
+                <h6>Payment method</h6>
+                <div class="form-check"><input class="form-check-input" type="radio" name="payment_method" value="cod" id="cod" checked><label class="form-check-label" for="cod">Cash on Delivery</label></div>
+                <div class="form-check mb-3"><input class="form-check-input" type="radio" name="payment_method" value="online" id="online"><label class="form-check-label" for="online">Online Payment (demo)</label></div>
+                <div class="d-flex gap-2"><button type="button" class="btn btn-light step-prev">Back</button><button type="submit" class="btn btn-primary flex-grow-1">Place order</button></div>
+            </div>
+        </form>
+        {% else %}
+        <div class="card p-3"><p class="text-muted">You have no saved addresses. Add one to continue.</p>
+            <a href="{% url 'accounts:address_add' %}?next={% url 'orders:checkout' %}" class="btn btn-outline-primary">Add address</a></div>
+        {% endif %}
+    </div>
+    <div class="col-lg-5">
+        <div class="card p-3">
+            <h6>Order summary</h6>
+            {% for item in cart.items.all %}
+            <div class="d-flex justify-content-between small"><span>{{ item.variant.product.name }} x{{ item.quantity }}</span><span>₹{{ item.line_total }}</span></div>
             {% endfor %}
             <hr>
             <div class="d-flex justify-content-between"><span>Subtotal</span><span>₹{{ subtotal }}</span></div>
