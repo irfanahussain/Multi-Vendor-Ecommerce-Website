@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load order_extras %}
+{% block title %}Track Order {{ order.order_number }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+    <div>
+        <h4 class="mb-1">Track Order {{ order.order_number }}</h4>
+        <p class="text-muted mb-0">Placed on {{ order.created_at|date:"M d, Y H:i" }}. Each seller ships separately, so their progress can differ.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'orders:order_detail' order.order_number %}" class="btn btn-outline-primary">Order details</a>
+        <a href="{% url 'orders:order_list' %}" class="btn btn-outline-secondary">All orders</a>
+    </div>
+</div>
+
+{% for vo in vendor_orders %}
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-shop me-1"></i> <strong>{{ vo.vendor.store.store_name|default:vo.vendor.username }}</strong></span>
+        <span class="badge {{ vo.status|status_badge }}">{{ vo.get_status_display }}</span>
+    </div>
+    <div class="card-body">
+        {% if vo.timeline %}
+        <ol class="track-steps" aria-label="Order progress for {{ vo.vendor.store.store_name|default:vo.vendor.username }}">
+            {% for step in vo.timeline %}
+            <li class="track-{{ step.state }}"{% if step.state == 'current' %} aria-current="step"{% endif %}><span class="track-dot">{% if step.state == 'done' %}<i class="bi bi-check-lg"></i>{% endif %}</span><span class="track-label">{{ step.label }}</span></li>
+            {% endfor %}
+        </ol>
+        {% elif vo.exception %}
+        <div class="alert alert-{{ vo.exception.0 }} mb-3"><strong>{{ vo.get_status_display }}.</strong> {{ vo.exception.1 }}</div>
+        {% endif %}
+        <p class="small text-muted mb-2">Last updated {{ vo.updated_at|date:"M d, Y H:i" }}</p>
+        <ul class="list-unstyled small mb-2">
+            {% for item in vo.items.all %}
+            <li>{{ item.product_name }}{% if item.variant_name %} ({{ item.variant_name }}){% endif %} × {{ item.quantity }}</li>
+            {% endfor %}
+        </ul>
+        {% if vo.can_cancel %}
+        <form method="post" action="{% url 'orders:cancel_vendor_order' vo.id %}" class="confirm-action" data-confirm="Cancel this vendor's items?">
+            {% csrf_token %}
+            <button class="btn btn-sm btn-outline-danger">Cancel this vendor's items</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

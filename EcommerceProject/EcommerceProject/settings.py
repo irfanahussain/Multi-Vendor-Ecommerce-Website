@@ -31,7 +31,7 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
+    'accounts.admin_config.RoleAdminConfig',  # django.contrib.admin with role-aware access
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     'orders',
     'reviews',
     'dashboard',
-    'returns_app'
+    'returns_app',
+    'wishlist',
 ]
 
 MIDDLEWARE = [
@@ -69,6 +70,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'orders.context_processors.cart_summary',
+                'catalog.context_processors.nav_categories',
             ],
         },
     },

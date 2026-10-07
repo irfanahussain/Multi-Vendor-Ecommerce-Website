@@ -1,5 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required, user_passes_test
+from functools import wraps
+
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import redirect_to_login
 from django.contrib import messages
 from django.db.models import Sum, Count
 from django.core.exceptions import PermissionDenied
@@ -13,11 +16,17 @@ from accounts.models import User
 
 
 def admin_required(view_func):
-    def check(user):
-        if user.is_authenticated and user.is_admin_role:
-            return True
-        raise PermissionDenied
-    return user_passes_test(check)(view_func)
+    """Admin Dashboard access: Admin or Super Admin roles only.
+    anonymous -> login page; Customer / Vendor -> 403."""
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        user = request.user
+        if not user.is_authenticated:
+            return redirect_to_login(request.get_full_path())
+        if not user.is_admin_role:
+            raise PermissionDenied
+        return view_func(request, *args, **kwargs)
+    return wrapper
 
 
 @login_required
@@ -33,6 +42,9 @@ def redirect_by_role(request):
 
 @login_required
 def customer_dashboard(request):
+    if not request.user.is_customer_role:
+        # Vendors / Admins / Super Admins have their own dashboard.
+        return redirect('dashboard:redirect')
     orders = Order.objects.filter(customer=request.user).order_by('-created_at')
     context = {
         'recent_orders': orders[:5],

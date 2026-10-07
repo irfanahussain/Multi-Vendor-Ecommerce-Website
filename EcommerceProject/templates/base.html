@@ -46,6 +46,12 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link mm-nav-icon" href="{% url 'wishlist:list' %}">
+                                <i class="bi bi-heart" aria-hidden="true"></i>
+                                <span>Wishlist</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link mm-nav-icon" href="{% url 'orders:order_list' %}">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg>
                                 <span>My Orders</span>

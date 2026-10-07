@@ -162,6 +162,7 @@ document.addEventListener('DOMContentLoaded', function () {
             badge.className = 'badge rounded-pill ' + (s === 0 ? 'badge-oos' : s <= 5 ? 'badge-pending' : 'badge-approved');
             badge.textContent = s === 0 ? 'Out of stock' : s <= 5 ? 'Only ' + s + ' left!' : 'In stock';
             form.action = r.dataset.action; btn.disabled = s === 0;
+            var bn = document.getElementById('buyNow'); if (bn) bn.disabled = s === 0;
             qty.max = s; if (parseInt(qty.value, 10) > s) qty.value = Math.max(1, s);
             if (r.dataset.image && main) main.src = r.dataset.image;
         };

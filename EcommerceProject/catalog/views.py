@@ -7,6 +7,7 @@ from django.core.paginator import Paginator
 from .models import Product,Category,Brand,ProductVariant,StockHistory
 from .forms import ProductForm,ProductVariantForm,StockAdjustForm
 from vendors.decorators import vendor_required
+from wishlist.utils import wishlisted_ids
 
 def landing(request):
     from orders.views import FREE_SHIPPING_THRESHOLD
@@ -56,6 +57,7 @@ def home(request):
     page_obj=paginator.get_page(request.GET.get('page'))
     context={
         'page_obj':page_obj,
+        'wishlist_ids':wishlisted_ids(request.user,[p.id for p in page_obj]),
         'categories':Category.objects.filter(is_active=True,parent=None),
         'brands':Brand.objects.filter(is_active=True),
         'query':query,
@@ -87,6 +89,7 @@ def product_detail(request,slug):
         'related':related,
         'reviews':reviews,
         'can_review':can_review,
+        'wishlist_ids':wishlisted_ids(request.user,[product.id]),
     }
     return render(request,'catalog/product_detail.html',context)
 

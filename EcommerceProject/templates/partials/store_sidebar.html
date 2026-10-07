@@ -22,6 +22,7 @@
     {% if user.is_authenticated %}
         {% if user.is_customer_role %}
         <a class="mm-ss-link {% if page == 'cart' %}active{% endif %}" href="{% url 'orders:cart' %}"><i class="bi bi-bag"></i> My Cart {% if cart_item_count %}<span class="badge rounded-pill bg-primary ms-auto">{{ cart_item_count }}</span>{% endif %}</a>
+        <a class="mm-ss-link {% if request.resolver_match.app_name == 'wishlist' %}active{% endif %}" href="{% url 'wishlist:list' %}"><i class="bi bi-heart"></i> My Wishlist</a>
         <a class="mm-ss-link {% if page == 'order_list' %}active{% endif %}" href="{% url 'orders:order_list' %}"><i class="bi bi-receipt"></i> My Orders {% if active_order_count %}<span class="badge rounded-pill bg-primary ms-auto">{{ active_order_count }}</span>{% endif %}</a>
         <a class="mm-ss-link" href="{% url 'returns:my_returns' %}"><i class="bi bi-arrow-return-left"></i> My Returns</a>
         {% else %}

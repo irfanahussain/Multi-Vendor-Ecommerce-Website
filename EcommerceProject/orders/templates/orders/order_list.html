@@ -1,22 +1,29 @@
 {% extends "base.html" %}
+{% load order_extras %}
 {% block title %}My Orders{% endblock %}
 {% block content %}
 <h4 class="mb-3">My Orders</h4>
 {% if orders %}
-<table class="table bg-white">
-    <thead><tr><th>Order #</th><th>Date</th><th>Total</th><th>Payment</th><th></th></tr></thead>
+<div class="table-responsive">
+<table class="table bg-white align-middle">
+    <thead><tr><th>Order #</th><th>Date</th><th>Total</th><th>Payment</th><th>Status</th><th></th></tr></thead>
     <tbody>
     {% for order in orders %}
         <tr>
             <td>{{ order.order_number }}</td>
             <td>{{ order.created_at|date:"M d, Y" }}</td>
             <td>₹{{ order.total_amount }}</td>
-            <td><span class="badge bg-info">{{ order.get_payment_status_display }}</span></td>
-            <td><a href="{% url 'orders:order_detail' order.order_number %}" class="btn btn-sm btn-outline-primary">View</a></td>
+            <td>{{ order.get_payment_method_display }}<br><span class="badge bg-info">{{ order.get_payment_status_display }}</span></td>
+            <td><span class="badge {{ order.status_key|status_badge }}">{{ order.status_text }}</span></td>
+            <td class="text-nowrap">
+                <a href="{% url 'orders:order_track' order.order_number %}" class="btn btn-sm btn-primary"><i class="bi bi-truck"></i> Track Order</a>
+                <a href="{% url 'orders:order_detail' order.order_number %}" class="btn btn-sm btn-outline-primary">View Details</a>
+            </td>
         </tr>
     {% endfor %}
     </tbody>
 </table>
+</div>
 {% else %}
 <div class="mm-empty card">
     <div class="mm-empty-icon">

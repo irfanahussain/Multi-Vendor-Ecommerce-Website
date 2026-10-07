@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Vendor access{% endblock %}
+{% block content %}
+<div class="card p-4 bg-white mx-auto" style="max-width:640px;">
+    <h4 class="mb-2"><i class="bi bi-shield-lock me-2"></i>{{ title }}</h4>
+    {% if store %}<p class="text-muted mb-2">Store: <strong>{{ store.store_name }}</strong> &middot; Status: {{ store.get_status_display }}</p>{% endif %}
+    <p>{{ message }}</p>
+    <div class="d-flex gap-2">
+        <a class="btn btn-primary" href="{% url 'catalog:home' %}">Continue shopping</a>
+        <a class="btn btn-outline-secondary" href="{% url 'accounts:profile' %}">My profile</a>
+    </div>
+</div>
+{% endblock %}

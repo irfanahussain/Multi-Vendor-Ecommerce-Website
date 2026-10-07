@@ -55,7 +55,7 @@
     <div class="row g-3">
       {% for product in page_obj %}
       {% with stock=product.total_stock rating=product.average_rating %}
-      <div class="col-6 col-md-4 col-xl-3">
+      <div class="col-6 col-md-4 col-xl-3" id="product-{{ product.id }}">
         <div class="card product-card h-100">
           <a href="{{ product.get_absolute_url }}" class="product-media">
             {% if product.image %}<img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy">{% else %}<div class="product-noimg"><i class="bi bi-image"></i></div>{% endif %}
@@ -63,6 +63,7 @@
             {% if stock == 0 %}<span class="badge rounded-pill badge-oos media-badge-bl">Out of stock</span>
             {% elif stock <= 5 %}<span class="badge rounded-pill badge-pending media-badge-bl">Only {{ stock }} left!</span>{% endif %}
           </a>
+          {% include "wishlist/_heart.html" with product=product %}
           <div class="card-body">
             <div class="small text-muted text-truncate">{{ product.vendor.store.store_name|default:product.vendor.username }}</div>
             <a href="{{ product.get_absolute_url }}" class="product-title">{{ product.name }}</a>

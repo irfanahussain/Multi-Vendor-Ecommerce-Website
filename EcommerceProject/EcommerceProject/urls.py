@@ -28,6 +28,7 @@ urlpatterns = [
     path('reviews/', include('reviews.urls')),
     path('dashboard/', include('dashboard.urls')),
      path('returns/', include('returns_app.urls')),
+     path('wishlist/', include('wishlist.urls')),
 
 ]
 

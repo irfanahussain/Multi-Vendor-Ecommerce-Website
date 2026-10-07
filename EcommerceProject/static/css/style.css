@@ -389,3 +389,26 @@ body:has(.mm-shell.with-sidebar) .mm-navbar > .container,body:has(.mm-shell.with
 .cart-line{font-weight:700;font-size:1.05rem}
 .cart-summary{position:sticky;top:78px}
 @media(max-width:575.98px){.cart-item{grid-template-columns:72px 1fr}.cart-thumb{width:72px;height:72px}.cart-actions{grid-column:1 / -1;flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:wrap}}
+/* Wishlist */
+.wish-form{position:absolute;top:.5rem;right:.5rem;z-index:2;margin:0}
+.wish-form-inline,.wish-form.wish-form-inline{position:static;flex-shrink:0}
+.wish-btn{display:inline-flex;align-items:center;gap:.4rem;border:1px solid var(--color-border);background:#fff;color:#64748B;border-radius:999px;min-width:34px;height:34px;padding:0 .55rem;justify-content:center;text-decoration:none;cursor:pointer;box-shadow:0 1px 3px rgba(15,23,42,.12)}
+.wish-btn:hover{color:#E11D48;border-color:#E11D48}
+.wish-btn.is-active{color:#E11D48}
+.card > .wish-btn{position:absolute;top:.5rem;right:.5rem;z-index:2}
+.wish-unavailable .product-media img{filter:grayscale(1);opacity:.6}
+@media(prefers-reduced-motion:reduce){.wish-btn{transition:none}}
+/* Order tracking timeline */
+.track-steps{display:flex;list-style:none;margin:0 0 1rem;padding:0}
+.track-steps li{flex:1;text-align:center;position:relative;font-size:.8rem;color:var(--color-text-muted)}
+.track-steps li::before{content:"";position:absolute;top:13px;left:-50%;width:100%;height:3px;background:#E2E8F0;z-index:0}
+.track-steps li:first-child::before{display:none}
+.track-dot{position:relative;z-index:1;display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#E2E8F0;color:#fff;font-size:.8rem}
+.track-label{display:block;margin-top:.35rem}
+.track-steps li.track-done::before,.track-steps li.track-current::before{background:#6B4C9A}
+.track-steps li.track-done .track-dot,.track-steps li.track-current .track-dot{background:#6B4C9A}
+.track-steps li.track-current .track-dot{box-shadow:0 0 0 4px rgba(107,76,154,.25)}
+.track-steps li.track-done,.track-steps li.track-current{color:#0F172A}
+.track-steps li.track-current .track-label{font-weight:600}
+@media(max-width:575px){.track-steps{flex-direction:column;gap:.75rem}.track-steps li{display:flex;align-items:center;gap:.6rem;text-align:left}.track-steps li::before{display:none}.track-label{margin-top:0}}
+

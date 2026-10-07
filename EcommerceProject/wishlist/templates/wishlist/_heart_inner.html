@@ -1,0 +1,14 @@
+{# Inner heart markup. Params: product, in_wishlist (bool), label (optional: show text). Use _heart.html. #}
+{% if user.is_authenticated %}
+  {% if user.is_customer_role %}
+  <form method="post" action="{% if in_wishlist %}{% url 'wishlist:remove' product.id %}{% else %}{% url 'wishlist:add' product.id %}{% endif %}" class="wish-form{% if label %} wish-form-inline{% endif %}">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+    <button type="submit" class="wish-btn{% if in_wishlist %} is-active{% endif %}" aria-pressed="{% if in_wishlist %}true{% else %}false{% endif %}" aria-label="{% if in_wishlist %}Remove from wishlist{% else %}Add to wishlist{% endif %}" title="{% if in_wishlist %}Remove from wishlist{% else %}Add to wishlist{% endif %}">
+      <i class="bi bi-heart{% if in_wishlist %}-fill{% endif %}"></i>{% if label %}<span>{% if in_wishlist %}Saved to wishlist{% else %}Add to wishlist{% endif %}</span>{% endif %}
+    </button>
+  </form>
+  {% endif %}
+{% else %}
+  <a href="{% url 'accounts:login' %}?next={{ request.get_full_path|urlencode }}" class="wish-btn{% if label %} wish-form-inline{% endif %}" aria-label="Log in to add to wishlist" title="Log in to add to wishlist"><i class="bi bi-heart"></i>{% if label %}<span>Add to wishlist</span>{% endif %}</a>
+{% endif %}

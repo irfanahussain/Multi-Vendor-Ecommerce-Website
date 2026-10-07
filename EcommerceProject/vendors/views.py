@@ -3,12 +3,41 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Sum,Count
 from .models import VendorStore
-from .decorators import vendor_required
+from django.core.exceptions import PermissionDenied
+from .decorators import vendor_required,get_vendor_store,vendor_has_access
 from .forms import VendorStoreForm
 from catalog.models import Product,ProductVariant
 from orders.models import VendorOrder
 
 # Create your views here.
+
+# Shown to a vendor who is signed in but not (yet) allowed to use vendor features.
+ACCESS_MESSAGES={
+    VendorStore.Status.PENDING:('Your store is awaiting approval',
+        'Our team is reviewing your vendor registration. You will be able to manage products and orders once it is approved.'),
+    VendorStore.Status.REJECTED:('Your vendor application was rejected',
+        'Your store has not been approved, so vendor features are not available. Please contact support if you think this is a mistake.'),
+    VendorStore.Status.INACTIVE:('Your store is inactive',
+        'Your store has been deactivated, so vendor features are not available. Please contact support to have it re-enabled.'),
+}
+
+@login_required
+def vendor_access_status(request):
+    """Explains to a blocked vendor why vendor features are unavailable.
+    Vendors with access go straight to their dashboard."""
+    user=request.user
+    if not user.is_vendor_role:
+        raise PermissionDenied
+    store=get_vendor_store(user)
+    if vendor_has_access(user,store):
+        return redirect('vendors:dashboard')
+    if store is None:
+        title,message='No vendor store found','No store is linked to your account. Please contact support.'
+    elif not user.is_active_account:
+        title,message='Your vendor account is deactivated','Vendor features are not available for this account. Please contact support.'
+    else:
+        title,message=ACCESS_MESSAGES.get(store.status,('Vendor access unavailable','Vendor features are not available for your store right now.'))
+    return render(request,'vendors/access_status.html',{'store':store,'title':title,'message':message})
 
 @vendor_required
 def store_settings(request):

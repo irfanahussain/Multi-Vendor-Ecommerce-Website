@@ -1,0 +1,2 @@
+{# Wishlist heart. Params: product, label (optional: show text, used on detail page). Reads wishlist_ids from context. #}
+{% if product.id in wishlist_ids %}{% include "wishlist/_heart_inner.html" with in_wishlist=True %}{% else %}{% include "wishlist/_heart_inner.html" with in_wishlist=False %}{% endif %}

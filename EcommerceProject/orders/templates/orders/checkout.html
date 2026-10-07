@@ -3,6 +3,7 @@
 {% block title %}Checkout{% endblock %}
 {% block content %}
 <h4 class="mb-3">Checkout</h4>
+{% if buy_now %}<p class="small text-muted"><i class="bi bi-lightning-charge"></i> Buy Now — this order contains only the item below. Your cart is unchanged.</p>{% endif %}
 <ol class="stepper" id="stepper">
     <li class="active" data-step="1"><span>1</span> Address</li>
     <li data-step="2"><span>2</span> Order review</li>
@@ -22,14 +23,14 @@
                         {{ addr.address_line }}, {{ addr.city }}, {{ addr.state }} - {{ addr.pincode }}</label>
                 </div>
                 {% endfor %}
-                <a href="{% url 'accounts:address_add' %}?next={% url 'orders:checkout' %}" class="small mb-3">+ Add another address</a>
+                <a href="{% url 'accounts:address_add' %}?next={{ checkout_url }}" class="small mb-3">+ Add another address</a>
                 <button type="button" class="btn btn-primary step-next">Continue to review</button>
             </div>
 
             <div class="card p-3 mb-3 checkout-step" data-step="2">
                 <h6>Review your orders</h6>
                 <p class="small text-muted">Items ship separately from each store.</p>
-                {% for g in cart.items.all|group_by_vendor %}
+                {% for g in checkout_items|group_by_vendor %}
                 <div class="mb-3">
                     <div class="vendor-banner mb-2"><i class="bi bi-shop me-1"></i> <strong>{{ g.vendor.store.store_name|default:g.vendor.username }}</strong></div>
                     {% for item in g.lines %}
@@ -49,14 +50,14 @@
         </form>
         {% else %}
         <div class="card p-3"><p class="text-muted">You have no saved addresses. Add one to continue.</p>
-            <a href="{% url 'accounts:address_add' %}?next={% url 'orders:checkout' %}" class="btn btn-outline-primary">Add address</a></div>
+            <a href="{% url 'accounts:address_add' %}?next={{ checkout_url }}" class="btn btn-outline-primary">Add address</a></div>
         {% endif %}
     </div>
     <div class="col-lg-5">
         <div class="card p-3">
             <h6>Order summary</h6>
-            {% for item in cart.items.all %}
-            <div class="d-flex justify-content-between small"><span>{{ item.variant.product.name }} x{{ item.quantity }}</span><span>₹{{ item.line_total }}</span></div>
+            {% for item in checkout_items %}
+            <div class="d-flex justify-content-between small"><span>{{ item.variant.product.name }} ({{ item.variant.name }}) x{{ item.quantity }}</span><span>₹{{ item.line_total }}</span></div>
             {% endfor %}
             <hr>
             <div class="d-flex justify-content-between"><span>Subtotal</span><span>₹{{ subtotal }}</span></div>
