@@ -129,7 +129,7 @@ class VendorOrder(models.Model):
 
     def save(self,*args,**kwargs):
         if self.subtotal:
-            self.commission_amount=self.subtotal*(self.commission_percent/100)
+            self.commission_amount=self.subtotal*self.commission_percent/100
             self.vendor_earning=self.subtotal-self.commission_amount
         super().save(*args, **kwargs)
 

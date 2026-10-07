@@ -311,8 +311,8 @@ class CustomerOrderTests(TestCase):
     def setUpTestData(cls):
         cls.vendor_a = User.objects.create_user('vendA', password='pw12345!', role=User.Role.VENDOR)
         cls.vendor_b = User.objects.create_user('vendB', password='pw12345!', role=User.Role.VENDOR)
-        VendorStore.objects.create(vendor=cls.vendor_a, store_name='Alpha Store')
-        VendorStore.objects.create(vendor=cls.vendor_b, store_name='Beta Store')
+        VendorStore.objects.create(vendor=cls.vendor_a,store_name='Alpha Store',status=VendorStore.Status.APPROVED)
+        VendorStore.objects.create(vendor=cls.vendor_b,store_name='Beta Store',status=VendorStore.Status.APPROVED)
         cls.alice = User.objects.create_user('alice', password='pw12345!')
         cls.bob = User.objects.create_user('bob', password='pw12345!')
         cls.addr = Address.objects.create(user=cls.alice, full_name='Alice A', phone='9', address_line='1 Main St',

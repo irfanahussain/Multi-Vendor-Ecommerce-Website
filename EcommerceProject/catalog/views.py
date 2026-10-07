@@ -72,9 +72,9 @@ def product_detail(request,slug):
     u=request.user
     if product.status!=Product.Status.ACTIVE and not (u.is_authenticated and (u.is_admin_role or product.vendor_id==u.id)):
         raise Http404
-    variants=product.variants.filter(is_active=True)
+    variants=sorted(product.variants.filter(is_active=True).order_by('id'),key=lambda v:v.stock_quantity==0)
     related=Product.objects.filter(category=product.category,status=Product.Status.ACTIVE).exclude(pk=product.pk)[:4]
-    reviews=product.reviews.filter(is_hidden=False).order_by('-created_at')
+    reviews=list(product.reviews.filter(is_hidden=False).select_related('customer').order_by('-created_at'))
     can_review=False
     if request.user.is_authenticated and request.user.is_customer_role:
         from orders.models import OrderItem
