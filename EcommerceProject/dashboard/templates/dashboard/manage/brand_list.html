@@ -1,0 +1,35 @@
+{% extends "dashboard/admin_base.html" %}
+{% load admin_extras %}
+{% block title %}Brands · Admin{% endblock %}
+{% block page_title %}Brands{% endblock %}
+{% block page_actions %}<a class="btn btn-primary btn-sm" href="{% url 'dashboard:admin_brand_add' %}"><i class="bi bi-plus-lg"></i> Add brand</a>{% endblock %}
+{% block admin_content %}
+<div class="card">
+  <div class="card-header bg-white">
+    <form method="get" class="row g-2 align-items-center">
+      <div class="col-sm"><input type="search" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="Search brands" aria-label="Search brands"></div>
+      <div class="col-sm-auto d-flex gap-2"><button class="btn btn-sm btn-outline-primary" type="submit">Search</button>{% if q %}<a class="btn btn-sm btn-light" href="{% url 'dashboard:admin_brands' %}">Clear</a>{% endif %}</div>
+    </form>
+  </div>
+  <div class="table-responsive"><table class="table align-middle mb-0">
+    <thead><tr><th>Name</th><th class="text-center">Products</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+    <tbody>
+    {% for b in page_obj %}
+      <tr>
+        <td class="fw-semibold">{% if b.logo %}<img src="{{ b.logo.url }}" alt="" width="32" height="32" class="rounded me-2" style="object-fit:cover" loading="lazy">{% endif %}{{ b.name }}<div class="small text-muted">{{ b.slug }}</div></td>
+        <td class="text-center">{{ b.product_count }}</td>
+        <td><span class="badge rounded-pill {% if b.is_active %}badge-approved{% else %}badge-oos{% endif %}">{% if b.is_active %}Active{% else %}Inactive{% endif %}</span></td>
+        <td class="text-end text-nowrap">
+          <a class="btn btn-sm btn-outline-primary" href="{% url 'dashboard:admin_brand_edit' b.pk %}">Edit</a>
+          <form method="post" action="{% url 'dashboard:admin_brand_toggle' b.pk %}" class="d-inline">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button type="submit" class="btn btn-sm btn-outline-secondary">{% if b.is_active %}Deactivate{% else %}Activate{% endif %}</button></form>
+          <form method="post" action="{% url 'dashboard:admin_brand_delete' b.pk %}" class="d-inline confirm-action" data-confirm="Delete brand {{ b.name }}? This cannot be undone.">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button type="submit" class="btn btn-sm btn-outline-danger">Delete</button></form>
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="4"><div class="mm-empty py-4"><div class="mm-empty-icon"><i class="bi bi-bookmark-star fs-3"></i></div><h5>{% if q %}No brands match “{{ q }}”{% else %}No brands yet{% endif %}</h5><p class="mb-0">{% if q %}Try a different search.{% else %}Add a brand to group products by maker.{% endif %}</p></div></td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% include "dashboard/manage/_pagination.html" %}
+</div>
+{% endblock %}

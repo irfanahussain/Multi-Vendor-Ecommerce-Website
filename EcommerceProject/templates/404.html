@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Page not found · MultiMart{% endblock %}
+{% block content %}
+<div class="mm-empty card">
+  <div class="mm-empty-icon"><i class="bi bi-compass fs-2"></i></div>
+  <h5>We couldn't find that page</h5>
+  <p>The link may be old, or the item may no longer be available.</p>
+  <div class="d-flex justify-content-center gap-2">
+    <a class="btn btn-primary" href="{% url 'catalog:landing' %}">Go to home</a>
+    <a class="btn btn-outline-secondary" href="{% url 'catalog:home' %}">Browse products</a>
+  </div>
+</div>
+{% endblock %}

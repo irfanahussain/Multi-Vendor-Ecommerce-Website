@@ -1,17 +1,21 @@
-<button class="btn btn-outline-secondary d-lg-none mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#dashNav">
+<button class="btn btn-outline-secondary d-lg-none mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#dashNav" aria-expanded="false" aria-controls="dashNav">
     <i class="bi bi-list"></i> Menu
 </button>
-<nav id="dashNav" class="collapse d-lg-block dash-sidebar">
+<nav id="dashNav" class="collapse d-lg-block dash-sidebar" aria-label="Dashboard navigation">
     {% if user.is_admin_role %}
     <a class="dash-link {% if active == 'overview' %}active{% endif %}" href="{% url 'dashboard:admin_dashboard' %}"><i class="bi bi-speedometer2"></i> Overview</a>
-    <a class="dash-link" href="{% url 'dashboard:admin_dashboard' %}#approvals"><i class="bi bi-patch-check"></i> Approvals</a>
+    <a class="dash-link {% if active == 'approvals' %}active{% endif %}" href="{% url 'dashboard:admin_approvals' %}"><i class="bi bi-patch-check"></i> Approvals</a>
     <div class="dash-group">Manage</div>
-    <a class="dash-link" href="{% url 'admin:catalog_category_changelist' %}"><i class="bi bi-diagram-3"></i> Categories</a>
-    <a class="dash-link" href="{% url 'admin:catalog_brand_changelist' %}"><i class="bi bi-bookmark-star"></i> Brands</a>
-    <a class="dash-link" href="{% url 'admin:orders_coupon_changelist' %}"><i class="bi bi-ticket-perforated"></i> Coupons</a>
-    <a class="dash-link" href="{% url 'admin:returns_app_returnrequest_changelist' %}"><i class="bi bi-arrow-return-left"></i> Returns</a>
-    <a class="dash-link" href="{% url 'admin:returns_app_refund_changelist' %}"><i class="bi bi-cash-coin"></i> Refunds</a>
-    <a class="dash-link" href="{% url 'admin:orders_vendororder_changelist' %}"><i class="bi bi-percent"></i> Commissions</a>
+    <a class="dash-link {% if active == 'categories' %}active{% endif %}" href="{% url 'dashboard:admin_categories' %}"><i class="bi bi-diagram-3"></i> Categories</a>
+    <a class="dash-link {% if active == 'brands' %}active{% endif %}" href="{% url 'dashboard:admin_brands' %}"><i class="bi bi-bookmark-star"></i> Brands</a>
+    <a class="dash-link {% if active == 'coupons' %}active{% endif %}" href="{% url 'dashboard:admin_coupons' %}"><i class="bi bi-ticket-perforated"></i> Coupons</a>
+    <a class="dash-link {% if active == 'returns' %}active{% endif %}" href="{% url 'dashboard:admin_returns' %}"><i class="bi bi-arrow-return-left"></i> Returns</a>
+    <a class="dash-link {% if active == 'refunds' %}active{% endif %}" href="{% url 'dashboard:admin_refunds' %}"><i class="bi bi-cash-coin"></i> Refunds</a>
+    <a class="dash-link {% if active == 'commissions' %}active{% endif %}" href="{% url 'dashboard:admin_commissions' %}"><i class="bi bi-percent"></i> Commissions</a>
+    {% if user.is_staff %}
+    <div class="dash-group">System</div>
+    <a class="dash-link" href="{% url 'admin:index' %}"><i class="bi bi-gear-wide-connected"></i> Django Admin (System)</a>
+    {% endif %}
     {% else %}
     <a class="dash-link {% if active == 'overview' %}active{% endif %}" href="{% url 'vendors:dashboard' %}"><i class="bi bi-speedometer2"></i> Overview</a>
     <a class="dash-link" href="{% url 'catalog:vendor_product_list' %}"><i class="bi bi-box-seam"></i> Products</a>

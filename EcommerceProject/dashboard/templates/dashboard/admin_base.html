@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{# Shared layout for every custom Admin Dashboard page: same sidebar, same header. #}
+{# Child pages set: title, page_title, optional page_actions, and admin_content. #}
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-2">{% include "partials/dash_sidebar.html" %}</div>
+  <div class="col-lg-10">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <h4 class="mb-0">{% block page_title %}{% endblock %}</h4>
+      <div class="d-flex flex-wrap gap-2">{% block page_actions %}{% endblock %}</div>
+    </div>
+    {% block admin_content %}{% endblock %}
+  </div>
+</div>
+{% endblock %}

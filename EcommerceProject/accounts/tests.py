@@ -204,11 +204,20 @@ class RoleAccessTests(TestCase):
         self.assertEqual(self.client.get(reverse('admin:accounts_user_changelist')).status_code, 403)
 
     def test_admin_can_approve_vendor(self):
+        # Approval is a state change, so it is POST-only (a GET must never approve).
         self._login(self.admin)
         store = self.pending_vendor.store
-        self.client.get(reverse('dashboard:approve_vendor', args=[store.pk]))
+        self.client.post(reverse('dashboard:approve_vendor', args=[store.pk]))
         store.refresh_from_db()
         self.assertEqual(store.status, VendorStore.Status.APPROVED)
+
+    def test_get_never_changes_approval_state(self):
+        self._login(self.admin)
+        store = self.pending_vendor.store
+        for name in ('approve_vendor', 'reject_vendor'):
+            self.assertEqual(self.client.get(reverse(f'dashboard:{name}', args=[store.pk])).status_code, 405)
+        store.refresh_from_db()
+        self.assertEqual(store.status, VendorStore.Status.PENDING)
 
     # ---- super admin ----
     def test_super_admin_full_access(self):

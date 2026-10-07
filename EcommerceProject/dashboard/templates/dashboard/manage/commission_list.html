@@ -1,0 +1,48 @@
+{% extends "dashboard/admin_base.html" %}
+{% load admin_extras %}
+{% block title %}Commissions · Admin{% endblock %}
+{% block page_title %}Commissions{% endblock %}
+{% block admin_content %}
+<div class="row g-3 mb-3">
+  <div class="col-6 col-xl-3"><div class="card kpi-card h-100"><div class="card-body"><div class="kpi-label">Vendor orders</div><div class="kpi-value">{{ totals.count }}</div><div class="kpi-sub">Excluding cancelled / returned / refunded</div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card kpi-card h-100"><div class="card-body"><div class="kpi-label">Sales</div><div class="kpi-value">₹{{ totals.sales }}</div><div class="kpi-sub">Vendor order subtotals</div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card kpi-card h-100"><div class="card-body"><div class="kpi-label">Platform commission</div><div class="kpi-value">₹{{ totals.commission }}</div><div class="kpi-sub">Earned by MultiMart</div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card kpi-card h-100"><div class="card-body"><div class="kpi-label">Vendor earnings</div><div class="kpi-value">₹{{ totals.earnings }}</div><div class="kpi-sub">After commission</div></div></div></div>
+</div>
+<div class="card">
+  <div class="card-header bg-white">
+    <form method="get" class="row g-2 align-items-center">
+      <div class="col-sm"><input type="search" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="Order number" aria-label="Search by order number"></div>
+      <div class="col-sm-auto"><select name="vendor" class="form-select form-select-sm" aria-label="Filter by vendor">
+        <option value="">All vendors</option>
+        {% for v in vendors %}<option value="{{ v.pk }}" {% if vendor_id == v.pk|stringformat:"s" %}selected{% endif %}>{{ v.store.store_name|default:v.username }}</option>{% endfor %}
+      </select></div>
+      <div class="col-sm-auto"><select name="status" class="form-select form-select-sm" aria-label="Filter by status">
+        <option value="">All statuses</option>
+        {% for value, label in statuses %}<option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select></div>
+      <div class="col-sm-auto d-flex gap-2"><button class="btn btn-sm btn-outline-primary" type="submit">Filter</button>{% if q or status or vendor_id %}<a class="btn btn-sm btn-light" href="{% url 'dashboard:admin_commissions' %}">Clear</a>{% endif %}</div>
+    </form>
+  </div>
+  <div class="table-responsive"><table class="table align-middle mb-0">
+    <thead><tr><th>Order</th><th>Vendor</th><th>Date</th><th>Status</th><th class="text-end">Subtotal</th><th class="text-end">Rate</th><th class="text-end">Commission</th><th class="text-end">Vendor earning</th></tr></thead>
+    <tbody>
+    {% for vo in page_obj %}
+      <tr>
+        <td class="fw-semibold">{{ vo.order.order_number }}</td>
+        <td>{{ vo.vendor.store.store_name|default:vo.vendor.username }}</td>
+        <td class="small text-muted">{{ vo.created_at|date:"M d, Y" }}</td>
+        <td><span class="badge rounded-pill {{ vo.status|admin_badge }}">{{ vo.get_status_display }}</span></td>
+        <td class="text-end">₹{{ vo.subtotal }}</td>
+        <td class="text-end">{{ vo.commission_percent|floatformat:"-2" }}%</td>
+        <td class="text-end">₹{{ vo.commission_amount }}</td>
+        <td class="text-end">₹{{ vo.vendor_earning }}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="8"><div class="mm-empty py-4"><div class="mm-empty-icon"><i class="bi bi-percent fs-3"></i></div><h5>{% if q or status or vendor_id %}No vendor orders match your filters{% else %}No vendor orders yet{% endif %}</h5><p class="mb-0">{% if q or status or vendor_id %}Try clearing the filters.{% else %}Commission is recorded here as customers place orders.{% endif %}</p></div></td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% include "dashboard/manage/_pagination.html" %}
+</div>
+{% endblock %}
