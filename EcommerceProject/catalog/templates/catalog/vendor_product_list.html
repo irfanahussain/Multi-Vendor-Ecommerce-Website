@@ -5,7 +5,7 @@
     <h4>My Products</h4>
     <a href="{% url 'catalog:vendor_product_create' %}" class="btn btn-primary">+ Add Product</a>
 </div>
-<table class="table table-bordered bg-white">
+<div class="table-responsive"><table class="table table-bordered bg-white">
     <thead><tr><th>Name</th><th>SKU</th><th>Price</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead>
     <tbody>
     {% for product in products %}
@@ -24,5 +24,5 @@
         <tr><td colspan="6" class="text-muted">No products yet.</td></tr>
     {% endfor %}
     </tbody>
-</table>
+</table></div>
 {% endblock %}

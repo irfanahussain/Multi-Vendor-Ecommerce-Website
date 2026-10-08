@@ -11,7 +11,6 @@ from django.db import transaction
 from django.db.models import Count, Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST, require_safe
 
 from accounts.models import User
@@ -20,7 +19,7 @@ from orders.models import Coupon, Order, VendorOrder
 from returns_app.models import Refund, ReturnRequest
 
 from .forms import BrandForm, CategoryForm, CouponAdminForm
-from .views import admin_required
+from .views import admin_required, back_or as _back
 
 PAGE_SIZE = 15
 
@@ -33,15 +32,6 @@ def _paginate(request, queryset):
     params = request.GET.copy()
     params.pop('page', None)
     return page, params.urlencode()
-
-
-def _back(request, default_name):
-    """Redirect to the page the action came from (same host only), else the list."""
-    target = request.POST.get('next', '')
-    if target and url_has_allowed_host_and_scheme(target, allowed_hosts={request.get_host()},
-                                                  require_https=request.is_secure()):
-        return redirect(target)
-    return redirect(default_name)
 
 
 def _form_page(request, *, form_class, instance, active, noun, list_url):

@@ -38,7 +38,7 @@
         {% if vo.can_cancel %}
         <form method="post" action="{% url 'orders:cancel_vendor_order' vo.id %}" class="confirm-action" data-confirm="Cancel this vendor's items?">
             {% csrf_token %}
-            <button class="btn btn-sm btn-outline-danger">Cancel this vendor's items</button>
+            <button class="btn btn-sm btn-outline-danger">Cancel the order</button>
         </form>
         {% endif %}
     </div>

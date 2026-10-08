@@ -3,17 +3,28 @@
 </button>
 <nav id="dashNav" class="collapse d-lg-block dash-sidebar" aria-label="Dashboard navigation">
     {% if user.is_admin_role %}
-    <a class="dash-link {% if active == 'overview' %}active{% endif %}" href="{% url 'dashboard:admin_dashboard' %}"><i class="bi bi-speedometer2"></i> Overview</a>
+    <a class="dash-link {% if active == 'overview' %}active{% endif %}" href="{% url 'dashboard:admin_dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
     <a class="dash-link {% if active == 'approvals' %}active{% endif %}" href="{% url 'dashboard:admin_approvals' %}"><i class="bi bi-patch-check"></i> Approvals</a>
-    <div class="dash-group">Manage</div>
+    <div class="dash-group">People</div>
+    <a class="dash-link {% if active == 'vendors' %}active{% endif %}" href="{% url 'dashboard:admin_vendors' %}"><i class="bi bi-shop"></i> Vendors</a>
+    <a class="dash-link {% if active == 'customers' %}active{% endif %}" href="{% url 'dashboard:admin_customers' %}"><i class="bi bi-people"></i> Customers</a>
+    <div class="dash-group">Catalog</div>
     <a class="dash-link {% if active == 'categories' %}active{% endif %}" href="{% url 'dashboard:admin_categories' %}"><i class="bi bi-diagram-3"></i> Categories</a>
     <a class="dash-link {% if active == 'brands' %}active{% endif %}" href="{% url 'dashboard:admin_brands' %}"><i class="bi bi-bookmark-star"></i> Brands</a>
+    <a class="dash-link {% if active == 'products' %}active{% endif %}" href="{% url 'dashboard:admin_products' %}"><i class="bi bi-box-seam"></i> Products</a>
+    <div class="dash-group">Sales</div>
+    <a class="dash-link {% if active == 'orders' %}active{% endif %}" href="{% url 'dashboard:admin_orders' %}"><i class="bi bi-receipt"></i> Orders</a>
     <a class="dash-link {% if active == 'coupons' %}active{% endif %}" href="{% url 'dashboard:admin_coupons' %}"><i class="bi bi-ticket-perforated"></i> Coupons</a>
+    <a class="dash-link {% if active == 'promotions' %}active{% endif %}" href="{% url 'dashboard:admin_promotions' %}"><i class="bi bi-megaphone"></i> Promotions</a>
+    <div class="dash-group">Finance</div>
     <a class="dash-link {% if active == 'returns' %}active{% endif %}" href="{% url 'dashboard:admin_returns' %}"><i class="bi bi-arrow-return-left"></i> Returns</a>
     <a class="dash-link {% if active == 'refunds' %}active{% endif %}" href="{% url 'dashboard:admin_refunds' %}"><i class="bi bi-cash-coin"></i> Refunds</a>
     <a class="dash-link {% if active == 'commissions' %}active{% endif %}" href="{% url 'dashboard:admin_commissions' %}"><i class="bi bi-percent"></i> Commissions</a>
-    {% if user.is_staff %}
+    <div class="dash-group">Insights</div>
+    <a class="dash-link {% if active == 'reports' %}active{% endif %}" href="{% url 'dashboard:admin_reports' %}"><i class="bi bi-bar-chart-line"></i> Reports</a>
     <div class="dash-group">System</div>
+    <a class="dash-link {% if active == 'settings' %}active{% endif %}" href="{% url 'dashboard:admin_settings' %}"><i class="bi bi-gear"></i> Settings</a>
+    {% if user.is_staff %}
     <a class="dash-link" href="{% url 'admin:index' %}"><i class="bi bi-gear-wide-connected"></i> Django Admin (System)</a>
     {% endif %}
     {% else %}

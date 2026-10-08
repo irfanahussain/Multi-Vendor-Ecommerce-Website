@@ -10,7 +10,7 @@
 </div>
 
 <h6>Recent Orders</h6>
-<table class="table bg-white">
+<div class="table-responsive"><table class="table bg-white">
     <thead><tr><th>Order #</th><th>Date</th><th>Total</th><th></th></tr></thead>
     <tbody>
     {% for order in recent_orders %}
@@ -24,5 +24,5 @@
         <tr><td colspan="4" class="text-muted">No orders yet. <a href="{% url 'catalog:home' %}">Start shopping</a></td></tr>
     {% endfor %}
     </tbody>
-</table>
+</table></div>
 {% endblock %}

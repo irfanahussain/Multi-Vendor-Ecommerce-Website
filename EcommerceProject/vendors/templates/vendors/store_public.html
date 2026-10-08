@@ -2,7 +2,7 @@
 {% block title %}{{ store.store_name }}{% endblock %}
 {% block content %}
 <div class="card mb-4">
-    {% if store.banner %}<img src="{{ store.banner.url }}" class="card-img-top" style="max-height:200px;object-fit:cover;">{% endif %}
+    {% if store.banner %}<img src="{{ store.banner.url }}" alt="{{ store.store_name }} banner" class="card-img-top" style="max-height:200px;object-fit:cover;" loading="lazy">{% endif %}
     <div class="card-body">
         <h4>{{ store.store_name }}</h4>
         <p>{{ store.business_description }}</p>
@@ -13,7 +13,7 @@
 {% for product in products %}
     <div class="col-md-3">
         <div class="card product-card">
-            {% if product.image %}<img src="{{ product.image.url }}">{% endif %}
+            {% if product.image %}<img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy">{% endif %}
             <div class="card-body">
                 <p class="small">{{ product.name }}</p>
                 <strong>₹{{ product.display_price }}</strong><br>

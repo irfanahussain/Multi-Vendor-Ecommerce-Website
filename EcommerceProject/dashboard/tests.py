@@ -67,13 +67,15 @@ class BaseAdminTestCase(TestCase):
 class AdminPageAccessTests(BaseAdminTestCase):
     LIST_PAGES = ['admin_dashboard', 'admin_approvals', 'admin_categories', 'admin_category_add',
                   'admin_brands', 'admin_brand_add', 'admin_coupons', 'admin_coupon_add',
-                  'admin_returns', 'admin_refunds', 'admin_commissions']
-    PK_PAGES = ['admin_category_edit', 'admin_brand_edit', 'admin_coupon_edit']
+                  'admin_returns', 'admin_refunds', 'admin_commissions',
+                  'admin_vendors', 'admin_customers', 'admin_products', 'admin_orders',
+                  'admin_promotions', 'admin_reports', 'admin_settings']
+    PK_PAGES = ['admin_category_edit', 'admin_brand_edit', 'admin_coupon_edit', 'admin_order_detail']
     # state-changing URLs: POST only
     ACTION_URLS = ['approve_vendor', 'reject_vendor', 'approve_product', 'reject_product',
                    'admin_category_toggle', 'admin_category_delete', 'admin_brand_toggle', 'admin_brand_delete',
                    'admin_coupon_toggle', 'admin_coupon_delete', 'admin_return_update', 'admin_return_refund',
-                   'admin_refund_update']
+                   'admin_refund_update', 'admin_vendor_status', 'admin_customer_toggle', 'admin_product_status']
 
     def all_urls(self):
         urls = [reverse(f'dashboard:{n}') for n in self.LIST_PAGES]
@@ -142,6 +144,9 @@ class AdminNavigationTests(BaseAdminTestCase):
         ('admin_dashboard', 'overview'), ('admin_approvals', 'approvals'), ('admin_categories', 'categories'),
         ('admin_brands', 'brands'), ('admin_coupons', 'coupons'), ('admin_returns', 'returns'),
         ('admin_refunds', 'refunds'), ('admin_commissions', 'commissions'),
+        ('admin_vendors', 'vendors'), ('admin_customers', 'customers'), ('admin_products', 'products'),
+        ('admin_orders', 'orders'), ('admin_promotions', 'promotions'), ('admin_reports', 'reports'),
+        ('admin_settings', 'settings'),
     ]
 
     def test_every_page_has_the_full_custom_sidebar_and_marks_itself_active(self):
@@ -672,3 +677,292 @@ class ErrorPageTests(BaseAdminTestCase):
         Category.objects.create(name='NavCat')
         self.assertContains(self.client.get(reverse('catalog:landing')), 'NavCat')
         self.assertContains(self.client.get('/this/does/not/exist/'), 'NavCat', status_code=404)
+
+
+# =============================================================================
+# Vendors / Customers / Products
+# =============================================================================
+
+class VendorsPageTests(BaseAdminTestCase):
+    def setUp(self):
+        self.login(self.admin)
+
+    def status(self, store, value):
+        return self.client.post(reverse('dashboard:admin_vendor_status', args=[store.pk]), {'status': value})
+
+    def test_list_filter_and_search(self):
+        resp = self.client.get(reverse('dashboard:admin_vendors'))
+        self.assertEqual({s.store_name for s in resp.context['page_obj']}, {'vend store', 'pendv store'})
+        resp = self.client.get(reverse('dashboard:admin_vendors'), {'status': 'pending'})
+        self.assertEqual([s.store_name for s in resp.context['page_obj']], ['pendv store'])
+        resp = self.client.get(reverse('dashboard:admin_vendors'), {'q': 'vend'})
+        self.assertIn('vend store', [s.store_name for s in resp.context['page_obj']])
+
+    def test_counts_are_per_vendor(self):
+        make_product(self.vendor, 'VP1')
+        make_product(self.vendor, 'VP2')
+        make_vendor_order(self.customer, self.vendor)
+        rows = {s.store_name: s for s in self.client.get(reverse('dashboard:admin_vendors')).context['page_obj']}
+        self.assertEqual((rows['vend store'].product_count, rows['vend store'].order_count), (2, 1))
+        self.assertEqual((rows['pendv store'].product_count, rows['pendv store'].order_count), (0, 0))
+
+    def test_status_changes_take_effect_on_vendor_access(self):
+        store = self.vendor.store
+        self.status(store, 'inactive')
+        store.refresh_from_db()
+        self.assertEqual(store.status, VendorStore.Status.INACTIVE)
+        self.login(self.vendor)
+        self.assertEqual(self.client.get(reverse('vendors:dashboard')).status_code, 302)
+        self.login(self.admin)
+        self.status(store, 'approved')
+        self.login(self.vendor)
+        self.assertEqual(self.client.get(reverse('vendors:dashboard')).status_code, 200)
+
+    def test_only_known_statuses_are_accepted(self):
+        store = self.vendor.store
+        for bad in ('pending', 'nonsense', ''):
+            self.status(store, bad)
+            store.refresh_from_db()
+            self.assertEqual(store.status, VendorStore.Status.APPROVED)
+
+    def test_get_does_not_change_status(self):
+        self.assertEqual(self.client.get(reverse('dashboard:admin_vendor_status', args=[self.vendor.store.pk])).status_code, 405)
+
+
+class CustomersPageTests(BaseAdminTestCase):
+    def setUp(self):
+        self.login(self.admin)
+
+    def test_lists_only_customers_with_their_own_totals(self):
+        make_vendor_order(self.customer, self.vendor, subtotal=Decimal('300.00'))
+        resp = self.client.get(reverse('dashboard:admin_customers'))
+        rows = {c.username: c for c in resp.context['page_obj']}
+        self.assertEqual(set(rows), {'cust', 'cust2'})            # no vendors, admins or super admins
+        self.assertEqual(rows['cust'].order_count, 1)
+        self.assertEqual(rows['cust'].spent, Decimal('300.00'))
+        self.assertEqual(rows['cust2'].order_count, 0)
+
+    def test_block_and_unblock_changes_ability_to_sign_in(self):
+        url = reverse('dashboard:admin_customer_toggle', args=[self.customer.pk])
+        self.client.post(url)
+        self.customer.refresh_from_db()
+        self.assertFalse(self.customer.is_active)
+        self.assertFalse(Client().login(username='cust', password=PW))
+        self.client.post(url)
+        self.customer.refresh_from_db()
+        self.assertTrue(self.customer.is_active)
+        self.assertTrue(Client().login(username='cust', password=PW))
+
+    def test_toggle_only_works_on_customer_accounts(self):
+        for target in (self.vendor, self.admin, self.super_admin):
+            self.assertEqual(self.client.post(reverse('dashboard:admin_customer_toggle', args=[target.pk])).status_code, 404)
+            target.refresh_from_db()
+            self.assertTrue(target.is_active)
+
+    def test_state_filter_and_search(self):
+        User.objects.filter(pk=self.customer2.pk).update(is_active=False)
+        resp = self.client.get(reverse('dashboard:admin_customers'), {'state': 'blocked'})
+        self.assertEqual([c.username for c in resp.context['page_obj']], ['cust2'])
+        resp = self.client.get(reverse('dashboard:admin_customers'), {'q': 'zzz'})
+        self.assertContains(resp, 'No customers match')
+
+
+class ProductsPageTests(BaseAdminTestCase):
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.live = make_product(cls.vendor, 'PL1')
+        cls.waiting = make_product(cls.vendor, 'PW1', status=Product.Status.PENDING)
+
+    def setUp(self):
+        self.login(self.admin)
+
+    def set(self, product, status):
+        return self.client.post(reverse('dashboard:admin_product_status', args=[product.pk]), {'status': status})
+
+    def test_list_filter_and_search(self):
+        resp = self.client.get(reverse('dashboard:admin_products'), {'status': 'pending'})
+        self.assertEqual([p.pk for p in resp.context['page_obj']], [self.waiting.pk])
+        resp = self.client.get(reverse('dashboard:admin_products'), {'q': 'PL1'})
+        self.assertEqual([p.pk for p in resp.context['page_obj']], [self.live.pk])
+
+    def test_approve_deactivate_reject(self):
+        self.set(self.waiting, 'active')
+        self.waiting.refresh_from_db()
+        self.assertEqual(self.waiting.status, Product.Status.ACTIVE)
+        self.set(self.waiting, 'inactive')
+        self.waiting.refresh_from_db()
+        self.assertEqual(self.waiting.status, Product.Status.INACTIVE)
+        self.set(self.waiting, 'rejected')
+        self.waiting.refresh_from_db()
+        self.assertEqual(self.waiting.status, Product.Status.REJECTED)
+
+    def test_unknown_status_refused(self):
+        for bad in ('draft', 'pending', 'bogus'):
+            self.set(self.live, bad)
+            self.live.refresh_from_db()
+            self.assertEqual(self.live.status, Product.Status.ACTIVE)
+
+    def test_deactivated_product_disappears_from_the_shop(self):
+        self.assertContains(self.client.get(reverse('catalog:home')), 'Prod PL1')
+        self.set(self.live, 'inactive')
+        self.assertNotContains(self.client.get(reverse('catalog:home')), 'Prod PL1')
+
+    def test_approval_forms_can_return_to_the_products_page(self):
+        url = reverse('dashboard:approve_product', args=[self.waiting.pk])
+        resp = self.client.post(url, {'next': reverse('dashboard:admin_products')})
+        self.assertRedirects(resp, reverse('dashboard:admin_products'), fetch_redirect_response=False)
+        resp = self.client.post(reverse('dashboard:reject_product', args=[self.waiting.pk]), {'next': 'https://evil.example/'})
+        self.assertRedirects(resp, reverse('dashboard:admin_approvals'), fetch_redirect_response=False)
+
+
+# =============================================================================
+# Orders
+# =============================================================================
+
+class OrdersPageTests(BaseAdminTestCase):
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.vo1, _ = make_vendor_order(cls.customer, cls.vendor, number='ORD-A0001')
+        cls.vo2, _ = make_vendor_order(cls.customer2, cls.vendor, number='ORD-B0002')
+
+    def setUp(self):
+        self.login(self.admin)
+
+    def test_list_shows_all_orders_and_filters(self):
+        resp = self.client.get(reverse('dashboard:admin_orders'))
+        self.assertEqual({o.order_number for o in resp.context['page_obj']}, {'ORD-A0001', 'ORD-B0002'})
+        resp = self.client.get(reverse('dashboard:admin_orders'), {'q': 'cust2'})
+        self.assertEqual([o.order_number for o in resp.context['page_obj']], ['ORD-B0002'])
+        resp = self.client.get(reverse('dashboard:admin_orders'), {'q': 'nothing-like-this'})
+        self.assertContains(resp, 'No orders match')
+
+    def test_detail_shows_vendor_sections_and_items(self):
+        resp = self.client.get(reverse('dashboard:admin_order_detail', args=[self.vo1.order.pk]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'ORD-A0001')
+        self.assertContains(resp, 'vend store')
+        self.assertContains(resp, 'Gadget')
+
+    def test_missing_order_is_404_and_page_is_read_only(self):
+        self.assertEqual(self.client.get(reverse('dashboard:admin_order_detail', args=[99999])).status_code, 404)
+        self.assertEqual(self.client.post(reverse('dashboard:admin_order_detail', args=[self.vo1.order.pk])).status_code, 405)
+        self.assertEqual(self.client.post(reverse('dashboard:admin_orders')).status_code, 405)
+
+    def test_customers_cannot_open_admin_order_pages(self):
+        self.login(self.customer)
+        self.assertEqual(self.client.get(reverse('dashboard:admin_order_detail', args=[self.vo2.order.pk])).status_code, 403)
+        self.assertEqual(self.client.get(reverse('dashboard:admin_orders')).status_code, 403)
+
+
+# =============================================================================
+# Promotions / Reports / Settings
+# =============================================================================
+
+class PromotionsReportsSettingsTests(BaseAdminTestCase):
+    def setUp(self):
+        self.login(self.admin)
+
+    def test_promotions_groups_coupons_by_timing(self):
+        now = timezone.now()
+        mk = lambda code, **kw: Coupon.objects.create(code=code, discount_type='fixed', discount_value=Decimal('5'), **kw)
+        mk('RUNNING', start_date=now - timedelta(days=1), expiry_date=now + timedelta(days=30))
+        mk('ENDSOON', start_date=now - timedelta(days=1), expiry_date=now + timedelta(days=2))
+        mk('LATER', start_date=now + timedelta(days=3), expiry_date=now + timedelta(days=9))
+        mk('JUSTENDED', start_date=now - timedelta(days=9), expiry_date=now - timedelta(days=1))
+        mk('LONGGONE', start_date=now - timedelta(days=90), expiry_date=now - timedelta(days=60))
+        mk('OFF', start_date=now - timedelta(days=1), expiry_date=now + timedelta(days=5), is_active=False)
+        resp = self.client.get(reverse('dashboard:admin_promotions'))
+        codes = lambda key: {c.code for c in resp.context[key]}
+        self.assertEqual(codes('running'), {'RUNNING', 'ENDSOON'})
+        self.assertEqual(codes('ending_soon'), {'ENDSOON'})
+        self.assertEqual(codes('scheduled'), {'LATER'})
+        self.assertEqual(codes('recently_ended'), {'JUSTENDED'})
+        self.assertEqual(resp.context['switched_off_count'], 1)
+
+    def test_promotions_empty_state(self):
+        self.assertContains(self.client.get(reverse('dashboard:admin_promotions')), 'No promotions are running')
+
+    def test_reports_numbers_and_ranges(self):
+        vo1, _ = make_vendor_order(self.customer, self.vendor, status='delivered', subtotal=Decimal('1000.00'), number='ORD-R1')
+        make_vendor_order(self.customer, self.vendor, status='cancelled', subtotal=Decimal('400.00'), number='ORD-R2')
+        old, _ = make_vendor_order(self.customer, self.vendor, status='delivered', subtotal=Decimal('50.00'), number='ORD-R3')
+        VendorOrder.objects.filter(pk=old.pk).update(created_at=timezone.now() - timedelta(days=200))
+        Order.objects.filter(pk=old.order.pk).update(created_at=timezone.now() - timedelta(days=200))
+        resp = self.client.get(reverse('dashboard:admin_reports'), {'range': '30'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context['order_count'], 2)
+        self.assertEqual(resp.context['sales'], Decimal('1000.00'))
+        self.assertEqual(resp.context['commission'], Decimal('100.00'))
+        statuses = {r['status']: r['count'] for r in resp.context['by_status']}
+        self.assertEqual(statuses, {'delivered': 1, 'cancelled': 1})
+        resp = self.client.get(reverse('dashboard:admin_reports'), {'range': 'all'})
+        self.assertEqual(resp.context['sales'], Decimal('1050.00'))
+        self.assertEqual(list(resp.context['top_products'])[0]['units'], 4)   # 2 + 2 units of "Gadget", cancelled excluded
+        self.assertEqual(resp.context['top_vendors'][0]['orders'], 2)
+
+    def test_reports_unknown_range_falls_back_and_empty_state_renders(self):
+        resp = self.client.get(reverse('dashboard:admin_reports'), {'range': 'banana'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context['chosen'], '30')
+        self.assertContains(resp, 'No sales in this period')
+
+    def test_reports_refunds_total(self):
+        vo, item = make_vendor_order(self.customer, self.vendor, status='delivered')
+        rr = ReturnRequest.objects.create(order_item=item, customer=self.customer, quantity=1, reason='x',
+                                          status=ReturnRequest.Status.RETURNED)
+        Refund.objects.create(return_request=rr, amount=Decimal('75.00'), status='completed', processed_at=timezone.now())
+        self.assertEqual(self.client.get(reverse('dashboard:admin_reports')).context['refunded'], Decimal('75.00'))
+
+    def test_settings_page_is_read_only_and_shows_role_counts(self):
+        resp = self.client.get(reverse('dashboard:admin_settings'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Default vendor commission')
+        self.assertContains(resp, 'read-only')
+        roles = dict(resp.context['roles'])
+        self.assertEqual(roles['Customer'], 2)
+        self.assertEqual(roles['Super Admin'], 1)
+        self.assertEqual(self.client.post(reverse('dashboard:admin_settings')).status_code, 405)
+
+
+# =============================================================================
+# Django Admin: no scary "not authorized" screen, no privilege changes
+# =============================================================================
+
+class DjangoAdminGateTests(BaseAdminTestCase):
+    def test_admin_without_staff_is_sent_to_the_dashboard_with_a_plain_message(self):
+        self.login(self.admin)
+        resp = self.client.get('/admin/', follow=True)
+        self.assertEqual(resp.redirect_chain[-1][0], reverse('dashboard:admin_dashboard'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertNotContains(resp, 'not authorized')
+        self.assertContains(resp, 'only for staff accounts')
+
+    def test_customer_and_vendor_are_sent_to_their_own_dashboards(self):
+        self.login(self.customer)
+        resp = self.client.get('/admin/', follow=True)
+        self.assertEqual(resp.redirect_chain[-1][0], reverse('dashboard:customer_dashboard'))
+        self.assertNotContains(resp, 'not authorized')
+        self.login(self.vendor)
+        resp = self.client.get('/admin/', follow=True)
+        self.assertEqual(resp.redirect_chain[-1][0], reverse('vendors:dashboard'))
+
+    def test_anonymous_still_gets_the_normal_admin_login(self):
+        resp = self.client.get('/admin/')
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/admin/login/', resp['Location'])
+        self.assertEqual(self.client.get('/admin/login/').status_code, 200)
+
+    def test_staff_admin_and_super_admin_still_get_in(self):
+        for user in (self.staff_admin, self.super_admin):
+            self.login(user)
+            self.assertEqual(self.client.get('/admin/').status_code, 200)
+
+    def test_an_admin_is_never_a_super_admin(self):
+        for user in (self.admin, self.staff_admin):
+            user.refresh_from_db()
+            self.assertFalse(user.is_superuser)
+            self.assertFalse(user.is_super_admin_role)
+        self.login(self.staff_admin)
+        self.assertEqual(self.client.get(reverse('admin:accounts_user_changelist')).status_code, 403)

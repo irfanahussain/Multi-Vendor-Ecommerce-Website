@@ -1,0 +1,62 @@
+{% extends "dashboard/admin_base.html" %}
+{% load admin_extras %}
+{% block title %}Reports · Admin{% endblock %}
+{% block page_title %}Reports{% endblock %}
+{% block page_actions %}
+<form method="get" class="d-flex gap-2 align-items-center">
+  <label class="visually-hidden" for="range">Time range</label>
+  <select id="range" name="range" class="form-select form-select-sm" onchange="this.form.submit()">
+    {% for value, label in ranges %}<option value="{{ value }}" {% if chosen == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+  <noscript><button class="btn btn-sm btn-outline-primary" type="submit">Apply</button></noscript>
+</form>
+{% endblock %}
+{% block admin_content %}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3"><div class="card kpi-card h-100"><div class="card-body"><div class="kpi-label">Orders placed</div><div class="kpi-value">{{ order_count }}</div><div class="kpi-sub">₹{{ gross_sales }} order totals</div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card kpi-card h-100"><div class="card-body"><div class="kpi-label">Vendor sales</div><div class="kpi-value">₹{{ sales }}</div><div class="kpi-sub">Excluding cancelled / returned</div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card kpi-card h-100"><div class="card-body"><div class="kpi-label">Platform commission</div><div class="kpi-value">₹{{ commission }}</div><div class="kpi-sub">Vendors earned ₹{{ earnings }}</div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card kpi-card h-100"><div class="card-body"><div class="kpi-label">Refunded</div><div class="kpi-value">₹{{ refunded }}</div><div class="kpi-sub">Completed refunds</div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card kpi-card h-100"><div class="card-body"><div class="kpi-label">New customers</div><div class="kpi-value">{{ new_customers }}</div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card kpi-card h-100"><div class="card-body"><div class="kpi-label">New vendors</div><div class="kpi-value">{{ new_vendors }}</div></div></div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-6"><div class="card h-100">
+    <div class="card-header bg-white fw-semibold">Vendor orders by status</div>
+    <div class="table-responsive"><table class="table align-middle mb-0">
+      <thead><tr><th>Status</th><th class="text-end">Orders</th></tr></thead>
+      <tbody>
+      {% for row in by_status %}
+        <tr><td><span class="badge rounded-pill {{ row.status|admin_badge }}">{{ row.label }}</span></td><td class="text-end">{{ row.count }}</td></tr>
+      {% empty %}
+        <tr><td colspan="2" class="text-center text-muted py-4">No orders in this period.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div></div></div>
+  <div class="col-lg-6"><div class="card h-100">
+    <div class="card-header bg-white fw-semibold">Top vendors</div>
+    <div class="table-responsive"><table class="table align-middle mb-0">
+      <thead><tr><th>Vendor</th><th class="text-center">Orders</th><th class="text-end">Sales</th><th class="text-end">Commission</th></tr></thead>
+      <tbody>
+      {% for v in top_vendors %}
+        <tr><td>{{ v.vendor__store__store_name|default:v.vendor__username }}</td><td class="text-center">{{ v.orders }}</td><td class="text-end">₹{{ v.sales }}</td><td class="text-end">₹{{ v.commission }}</td></tr>
+      {% empty %}
+        <tr><td colspan="4" class="text-center text-muted py-4">No sales in this period.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div></div></div>
+  <div class="col-12"><div class="card">
+    <div class="card-header bg-white fw-semibold">Top products by units sold</div>
+    <div class="table-responsive"><table class="table align-middle mb-0">
+      <thead><tr><th>Product</th><th class="text-end">Units</th><th class="text-end">Revenue</th></tr></thead>
+      <tbody>
+      {% for p in top_products %}
+        <tr><td>{{ p.product_name }}</td><td class="text-end">{{ p.units }}</td><td class="text-end">₹{{ p.revenue }}</td></tr>
+      {% empty %}
+        <tr><td colspan="3" class="text-center text-muted py-4">No sales in this period.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div></div></div>
+</div>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "dashboard/admin_base.html" %}
+{% block title %}Settings · Admin{% endblock %}
+{% block page_title %}Settings{% endblock %}
+{% block admin_content %}
+<div class="row g-3">
+  <div class="col-lg-7"><div class="card h-100">
+    <div class="card-header bg-white fw-semibold">Store rules <span class="badge bg-secondary ms-1">read-only</span></div>
+    <div class="table-responsive"><table class="table align-middle mb-0">
+      <tbody>
+      {% for label, value, note in config %}
+        <tr><td class="fw-semibold">{{ label }}<div class="small text-muted fw-normal">{{ note }}</div></td><td class="text-end">{{ value }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    <div class="card-footer bg-white small text-muted">These values are set in the application code, so they can't be edited from this page.</div>
+  </div></div>
+  <div class="col-lg-5">
+    <div class="card mb-3">
+      <div class="card-header bg-white fw-semibold">Accounts by role</div>
+      <ul class="list-group list-group-flush">
+        {% for label, count in roles %}<li class="list-group-item d-flex justify-content-between"><span>{{ label }}</span><span class="fw-semibold">{{ count }}</span></li>{% endfor %}
+      </ul>
+    </div>
+    <div class="card mb-3">
+      <div class="card-header bg-white fw-semibold">Your access</div>
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item d-flex justify-content-between"><span>Signed in as</span><span class="fw-semibold">{{ user.username }}</span></li>
+        <li class="list-group-item d-flex justify-content-between"><span>Role</span><span class="fw-semibold">{{ user.get_role_display }}</span></li>
+        <li class="list-group-item d-flex justify-content-between"><span>System console access</span>
+          <span>{% if user.is_staff %}<span class="badge badge-approved rounded-pill">Allowed</span>{% else %}<span class="badge badge-oos rounded-pill">Not enabled</span>{% endif %}</span></li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-header bg-white fw-semibold">Waiting for review</div>
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item d-flex justify-content-between"><span>Vendors</span><span class="fw-semibold">{{ pending_vendors }}</span></li>
+        <li class="list-group-item d-flex justify-content-between"><span>Products</span><span class="fw-semibold">{{ pending_products }}</span></li>
+      </ul>
+      <div class="card-footer bg-white"><a class="btn btn-sm btn-outline-primary" href="{% url 'dashboard:admin_approvals' %}">Open approvals</a></div>
+    </div>
+  </div>
+</div>
+{% endblock %}

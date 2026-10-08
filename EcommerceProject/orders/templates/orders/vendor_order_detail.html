@@ -3,14 +3,14 @@
 {% block content %}
 <h4>Order {{ vendor_order.order.order_number }}</h4>
 <p>Customer: {{ vendor_order.order.customer.username }}</p>
-<table class="table bg-white">
+<div class="table-responsive"><table class="table bg-white">
     <thead><tr><th>Product</th><th>Qty</th><th>Total</th></tr></thead>
     <tbody>
     {% for item in vendor_order.items.all %}
         <tr><td>{{ item.product_name }} ({{ item.variant_name }})</td><td>{{ item.quantity }}</td><td>₹{{ item.line_total }}</td></tr>
     {% endfor %}
     </tbody>
-</table>
+</table></div>
 
 <div class="row">
     <div class="col-md-4">

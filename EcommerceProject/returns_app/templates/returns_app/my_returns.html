@@ -2,7 +2,7 @@
 {% block title %}My Returns{% endblock %}
 {% block content %}
 <h4>My returns</h4>
-<table class="table bg-white">
+<div class="table-responsive"><table class="table bg-white">
     <thead><tr><th>#</th><th>Product</th><th>Qty</th><th>Reason</th><th>Status</th><th>Refund</th><th>Date</th></tr></thead>
     <tbody>
     {% for r in returns %}
@@ -19,5 +19,5 @@
         <tr><td colspan="7" class="text-muted">You have no return requests.</td></tr>
     {% endfor %}
     </tbody>
-</table>
+</table></div>
 {% endblock %}

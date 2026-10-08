@@ -1,8 +1,9 @@
 {% extends "base.html" %}
+{% load order_extras %}
 {% block title %}My Orders (Vendor){% endblock %}
 {% block content %}
 <h4>Orders</h4>
-<table class="table bg-white">
+<div class="table-responsive"><table class="table bg-white">
     <thead><tr><th>Order</th><th>Customer</th><th>Subtotal</th><th>Status</th><th></th></tr></thead>
     <tbody>
     {% for vo in vendor_orders %}
@@ -10,14 +11,14 @@
             <td>{{ vo.order.order_number }}</td>
             <td>{{ vo.order.customer.username }}</td>
             <td>₹{{ vo.subtotal }}</td>
-            <td><span class="badge bg-secondary">{{ vo.get_status_display }}</span></td>
+            <td><span class="badge rounded-pill {{ vo.status|status_badge }}">{{ vo.get_status_display }}</span></td>
             <td><a href="{% url 'orders:vendor_order_detail' vo.id %}" class="btn btn-sm btn-outline-primary">Manage</a></td>
         </tr>
     {% empty %}
         <tr><td colspan="5" class="text-muted">No orders yet.</td></tr>
     {% endfor %}
     </tbody>
-</table>
+</table></div>
 
 {% if page_obj.has_other_pages %}
 <nav class="mt-3"><ul class="pagination">

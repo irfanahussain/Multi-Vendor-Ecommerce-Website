@@ -7,6 +7,7 @@ from django.contrib import messages
 from django.db.models import Sum, Count
 from django.core.exceptions import PermissionDenied
 from django.views.decorators.http import require_POST, require_safe
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from vendors.models import VendorStore
 from catalog.models import Product
@@ -29,6 +30,15 @@ def admin_required(view_func):
             raise PermissionDenied
         return view_func(request, *args, **kwargs)
     return wrapper
+
+
+def back_or(request, default_name):
+    """After a POST action: return to the page it came from (same host only), else `default_name`."""
+    target = request.POST.get('next', '')
+    if target and url_has_allowed_host_and_scheme(target, allowed_hosts={request.get_host()},
+                                                  require_https=request.is_secure()):
+        return redirect(target)
+    return redirect(default_name)
 
 
 @login_required
@@ -102,7 +112,7 @@ def approve_vendor(request, pk):
     store.status = VendorStore.Status.APPROVED
     store.save()
     messages.success(request, f'{store.store_name} approved.')
-    return redirect('dashboard:admin_approvals')
+    return back_or(request, 'dashboard:admin_approvals')
 
 
 @admin_required
@@ -112,7 +122,7 @@ def reject_vendor(request, pk):
     store.status = VendorStore.Status.REJECTED
     store.save()
     messages.success(request, f'{store.store_name} rejected.')
-    return redirect('dashboard:admin_approvals')
+    return back_or(request, 'dashboard:admin_approvals')
 
 
 @admin_required
@@ -122,7 +132,7 @@ def approve_product(request, pk):
     product.status = Product.Status.ACTIVE
     product.save()
     messages.success(request, f'{product.name} approved and made active.')
-    return redirect('dashboard:admin_approvals')
+    return back_or(request, 'dashboard:admin_approvals')
 
 
 @admin_required
@@ -132,4 +142,4 @@ def reject_product(request, pk):
     product.status = Product.Status.REJECTED
     product.save()
     messages.success(request, f'{product.name} rejected.')
-    return redirect('dashboard:admin_approvals')
+    return back_or(request, 'dashboard:admin_approvals')

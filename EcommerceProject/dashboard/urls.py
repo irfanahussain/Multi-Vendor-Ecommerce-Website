@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views, admin_views
+from . import views, admin_views, admin_sections
 
 app_name = 'dashboard'
 
@@ -41,4 +41,16 @@ urlpatterns = [
     path('admin/refunds/<int:pk>/status/', admin_views.refund_update, name='admin_refund_update'),
 
     path('admin/commissions/', admin_views.commission_list, name='admin_commissions'),
+
+    path('admin/vendors/', admin_sections.vendor_list, name='admin_vendors'),
+    path('admin/vendors/<int:pk>/status/', admin_sections.vendor_set_status, name='admin_vendor_status'),
+    path('admin/customers/', admin_sections.customer_list, name='admin_customers'),
+    path('admin/customers/<int:pk>/toggle/', admin_sections.customer_toggle, name='admin_customer_toggle'),
+    path('admin/products/', admin_sections.product_list, name='admin_products'),
+    path('admin/products/<int:pk>/status/', admin_sections.product_set_status, name='admin_product_status'),
+    path('admin/orders/', admin_sections.order_list, name='admin_orders'),
+    path('admin/orders/<int:pk>/', admin_sections.order_detail, name='admin_order_detail'),
+    path('admin/promotions/', admin_sections.promotions, name='admin_promotions'),
+    path('admin/reports/', admin_sections.reports, name='admin_reports'),
+    path('admin/settings/', admin_sections.settings_page, name='admin_settings'),
 ]

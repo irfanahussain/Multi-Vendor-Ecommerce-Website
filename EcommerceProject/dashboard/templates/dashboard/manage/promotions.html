@@ -1,0 +1,46 @@
+{% extends "dashboard/admin_base.html" %}
+{% block title %}Promotions · Admin{% endblock %}
+{% block page_title %}Promotions{% endblock %}
+{% block page_actions %}
+<a class="btn btn-outline-secondary btn-sm" href="{% url 'dashboard:admin_coupons' %}">Manage coupons</a>
+<a class="btn btn-primary btn-sm" href="{% url 'dashboard:admin_coupon_add' %}"><i class="bi bi-plus-lg"></i> New coupon</a>
+{% endblock %}
+{% block admin_content %}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3"><div class="card kpi-card h-100"><div class="card-body"><div class="kpi-label">Running now</div><div class="kpi-value">{{ running_count }}</div><div class="kpi-sub">Customers can use these today</div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card kpi-card h-100"><div class="card-body"><div class="kpi-label">Scheduled</div><div class="kpi-value">{{ scheduled_count }}</div><div class="kpi-sub">Start in the future</div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card kpi-card h-100"><div class="card-body"><div class="kpi-label">Switched off</div><div class="kpi-value">{{ switched_off_count }}</div><div class="kpi-sub">Disabled by an admin</div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card kpi-card h-100"><div class="card-body"><div class="kpi-label">Times used</div><div class="kpi-value">{{ coupon_uses }}</div><div class="kpi-sub">Across all coupons</div></div></div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-6"><div class="card h-100">
+    <div class="card-header bg-white fw-semibold">Ending within 7 days</div>
+    <ul class="list-group list-group-flush">
+      {% for c in ending_soon %}
+      <li class="list-group-item d-flex justify-content-between align-items-center"><span class="fw-semibold">{{ c.code }}</span><span class="small text-muted">ends {{ c.expiry_date|date:"M d, H:i" }}</span></li>
+      {% empty %}<li class="list-group-item text-muted">Nothing is about to end.</li>{% endfor %}
+    </ul></div></div>
+  <div class="col-lg-6"><div class="card h-100">
+    <div class="card-header bg-white fw-semibold">Starting soon</div>
+    <ul class="list-group list-group-flush">
+      {% for c in scheduled %}
+      <li class="list-group-item d-flex justify-content-between align-items-center"><span class="fw-semibold">{{ c.code }}</span><span class="small text-muted">starts {{ c.start_date|date:"M d, H:i" }}</span></li>
+      {% empty %}<li class="list-group-item text-muted">No scheduled promotions.</li>{% endfor %}
+    </ul></div></div>
+  <div class="col-lg-6"><div class="card h-100">
+    <div class="card-header bg-white fw-semibold">Running now</div>
+    <ul class="list-group list-group-flush">
+      {% for c in running %}
+      <li class="list-group-item d-flex justify-content-between align-items-center"><span><span class="fw-semibold">{{ c.code }}</span> <span class="text-muted small">{% if c.discount_type == 'percent' %}{{ c.discount_value|floatformat:"-2" }}% off{% else %}₹{{ c.discount_value|floatformat:"-2" }} off{% endif %}</span></span><span class="small text-muted">used {{ c.used_count }}{% if c.usage_limit %}/{{ c.usage_limit }}{% endif %}</span></li>
+      {% empty %}<li class="list-group-item text-muted">No promotions are running. <a href="{% url 'dashboard:admin_coupon_add' %}">Create a coupon</a>.</li>{% endfor %}
+    </ul></div></div>
+  <div class="col-lg-6"><div class="card h-100">
+    <div class="card-header bg-white fw-semibold">Ended in the last 30 days</div>
+    <ul class="list-group list-group-flush">
+      {% for c in recently_ended %}
+      <li class="list-group-item d-flex justify-content-between align-items-center"><span class="fw-semibold">{{ c.code }}</span><span class="small text-muted">ended {{ c.expiry_date|date:"M d" }} · used {{ c.used_count }}</span></li>
+      {% empty %}<li class="list-group-item text-muted">No recently ended promotions.</li>{% endfor %}
+    </ul></div></div>
+</div>
+{% endblock %}
