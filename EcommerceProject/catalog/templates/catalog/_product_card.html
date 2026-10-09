@@ -1,0 +1,19 @@
+{# One product card. Param: product. Reads wishlist_ids from the context (see wishlist/_heart.html). #}
+{% with stock=product.total_stock rating=product.average_rating %}
+<article class="card product-card" id="product-{{ product.id }}">
+  <a href="{{ product.get_absolute_url }}" class="product-media" tabindex="-1" aria-hidden="true">
+    {% if product.image %}<img src="{{ product.image.url }}" alt="" loading="lazy">{% else %}<div class="product-noimg"><i class="bi bi-image"></i></div>{% endif %}
+    {% if product.discount_percent %}<span class="badge rounded-pill bg-danger media-badge-tl">{{ product.discount_percent }}% off</span>{% endif %}
+    {% if stock == 0 %}<span class="badge rounded-pill badge-oos media-badge-bl">Out of stock</span>
+    {% elif stock <= 5 %}<span class="badge rounded-pill badge-pending media-badge-bl">Only {{ stock }} left!</span>{% endif %}
+  </a>
+  {% include "wishlist/_heart.html" with product=product %}
+  <div class="card-body d-flex flex-column">
+    <div class="product-vendor text-truncate">{{ product.vendor.store.store_name|default:product.vendor.username }}</div>
+    <a href="{{ product.get_absolute_url }}" class="product-title" title="{{ product.name }}">{{ product.name }}</a>
+    <div class="stars small my-1" aria-label="Rated {{ rating }} out of 5">{% for i in "12345" %}<i class="bi bi-star{% if forloop.counter <= rating %}-fill{% endif %}"></i>{% endfor %}</div>
+    <div class="product-price mt-auto"><strong>₹{{ product.display_price }}</strong>{% if product.discount_price %}<span class="price-strike ms-1">₹{{ product.price }}</span>{% endif %}</div>
+    <a href="{{ product.get_absolute_url }}" class="btn btn-outline-primary btn-sm w-100 mt-2">View details</a>
+  </div>
+</article>
+{% endwith %}

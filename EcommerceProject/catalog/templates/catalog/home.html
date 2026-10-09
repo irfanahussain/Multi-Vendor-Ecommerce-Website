@@ -1,50 +1,79 @@
 {% extends "base.html" %}
-{% block title %}Shop — MultiMart{% endblock %}
+{% block title %}{% if selected_category_obj %}{{ selected_category_obj.name }} — MultiMart{% else %}Shop — MultiMart{% endif %}{% endblock %}
 {% block content %}
-<div class="row g-4">
-  <aside class="col-lg-3">
-    <form method="get" class="accordion filter-accordion" id="filters">
-      <input type="hidden" name="q" value="{{ query }}">
-      <input type="hidden" name="sort" value="{{ sort }}">
-      <div class="accordion-item">
-        <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#fCat">Categories</button></h2>
-        <div id="fCat" class="accordion-collapse collapse show"><div class="accordion-body">
-          <div class="form-check"><input class="form-check-input" type="radio" name="category" value="" id="cat-all" {% if not selected_category %}checked{% endif %}><label class="form-check-label" for="cat-all">All categories</label></div>
-          {% for cat in categories %}
-          <div class="form-check"><input class="form-check-input" type="radio" name="category" value="{{ cat.slug }}" id="cat{{ cat.id }}" {% if cat.slug == selected_category %}checked{% endif %}><label class="form-check-label" for="cat{{ cat.id }}">{{ cat.name }}</label></div>
-          {% endfor %}
-        </div></div>
-      </div>
-      <div class="accordion-item">
-        <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#fBrand">Brands</button></h2>
-        <div id="fBrand" class="accordion-collapse collapse {% if selected_brand %}show{% endif %}"><div class="accordion-body">
-          <div class="form-check"><input class="form-check-input" type="radio" name="brand" value="" id="br-all" {% if not selected_brand %}checked{% endif %}><label class="form-check-label" for="br-all">All brands</label></div>
-          {% for brand in brands %}
-          <div class="form-check"><input class="form-check-input" type="radio" name="brand" value="{{ brand.id }}" id="br{{ brand.id }}" {% if brand.id|stringformat:"s" == selected_brand %}checked{% endif %}><label class="form-check-label" for="br{{ brand.id }}">{{ brand.name }}</label></div>
-          {% endfor %}
-        </div></div>
-      </div>
-      <div class="accordion-item">
-        <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#fPrice">Price range</button></h2>
-        <div id="fPrice" class="accordion-collapse collapse {% if request.GET.min_price or request.GET.max_price %}show{% endif %}"><div class="accordion-body">
-          <div class="row g-2">
-            <div class="col"><input type="number" min="0" name="min_price" class="form-control" placeholder="Min ₹" value="{{ request.GET.min_price }}"></div>
-            <div class="col"><input type="number" min="0" name="max_price" class="form-control" placeholder="Max ₹" value="{{ request.GET.max_price }}"></div>
+<div class="mm-shop">
+
+  <aside class="mm-filters" aria-label="Product filters">
+    <button class="btn btn-outline-secondary btn-sm d-lg-none w-100 mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#filterPanel" aria-expanded="false" aria-controls="filterPanel">
+      <i class="bi bi-funnel"></i> Filters{% if has_filters %} (active){% endif %}
+    </button>
+    <div id="filterPanel" class="collapse d-lg-block">
+      <form method="get" class="mm-filter-card" id="filters">
+        <input type="hidden" name="q" value="{{ query }}">
+        <input type="hidden" name="sort" value="{{ sort }}">
+        {% if deals %}<input type="hidden" name="deals" value="1">{% endif %}
+
+        <div class="mm-filter-head">
+          <span>Filters</span>
+          {% if has_filters %}<a href="{% url 'catalog:home' %}" class="small">Clear all</a>{% endif %}
+        </div>
+
+        <div class="mm-filter-group">
+          <div class="mm-filter-title">Category</div>
+          <div class="mm-filter-scroll">
+            <div class="form-check"><input class="form-check-input" type="radio" name="category" value="" id="cat-all" {% if not selected_category %}checked{% endif %}><label class="form-check-label" for="cat-all">All categories</label></div>
+            {% for cat in categories %}
+            <div class="mm-filter-row">
+              <div class="form-check"><input class="form-check-input" type="radio" name="category" value="{{ cat.slug }}" id="cat{{ cat.id }}" {% if cat.slug == selected_category %}checked{% endif %}><label class="form-check-label" for="cat{{ cat.id }}">{{ cat.name }}</label></div>
+              {% if cat.subcategories.all %}<button class="mm-dd-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#catsub{{ cat.id }}" aria-expanded="{% if cat.slug == selected_category or selected_category_obj.parent_id == cat.id %}true{% else %}false{% endif %}" aria-controls="catsub{{ cat.id }}" aria-label="Show {{ cat.name }} subcategories"><i class="bi bi-chevron-down"></i></button>{% endif %}
+            </div>
+            {% if cat.subcategories.all %}
+            <div class="collapse {% if cat.slug == selected_category or selected_category_obj.parent_id == cat.id %}show{% endif %}" id="catsub{{ cat.id }}">
+              {% for sub in cat.subcategories.all %}
+              <div class="form-check mm-filter-sub"><input class="form-check-input" type="radio" name="category" value="{{ sub.slug }}" id="cat{{ sub.id }}" {% if sub.slug == selected_category %}checked{% endif %}><label class="form-check-label" for="cat{{ sub.id }}">{{ sub.name }}</label></div>
+              {% endfor %}
+            </div>
+            {% endif %}
+            {% empty %}
+            <p class="small text-muted mb-0 mt-1">No categories yet.</p>
+            {% endfor %}
           </div>
-        </div></div>
-      </div>
-      <button class="btn btn-primary w-100 mt-3" type="submit">Apply filters</button>
-      <a class="btn btn-link w-100" href="{% url 'catalog:home' %}">Clear all</a>
-    </form>
+        </div>
+
+        <div class="mm-filter-group">
+          <label class="mm-filter-title" for="f-brand">Brand</label>
+          <select name="brand" id="f-brand" class="form-select form-select-sm">
+            <option value="">All brands</option>
+            {% for brand in brands %}<option value="{{ brand.id }}" {% if brand.id|stringformat:"s" == selected_brand %}selected{% endif %}>{{ brand.name }}</option>{% endfor %}
+          </select>
+        </div>
+
+        <div class="mm-filter-group">
+          <div class="mm-filter-title">Price (₹)</div>
+          <div class="d-flex align-items-center gap-2">
+            <input type="number" min="0" name="min_price" class="form-control form-control-sm" placeholder="Min" aria-label="Minimum price" value="{{ min_price }}">
+            <span class="text-muted">–</span>
+            <input type="number" min="0" name="max_price" class="form-control form-control-sm" placeholder="Max" aria-label="Maximum price" value="{{ max_price }}">
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-sm w-100" type="submit">Apply filters</button>
+      </form>
+    </div>
   </aside>
 
-  <section class="col-lg-9">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h4 class="mb-0">{% if query %}Results for "{{ query }}"{% else %}All products{% endif %}</h4>
-      <form method="get" class="d-flex">
+  <section class="mm-results">
+    <div class="mm-results-bar">
+      <div>
+        <h1 class="mm-results-title">{% if selected_category_obj %}{{ selected_category_obj.name }}{% elif query %}Results for "{{ query }}"{% else %}All products{% endif %}</h1>
+        <div class="text-muted small">{{ result_count }} product{{ result_count|pluralize }}{% if selected_category_obj and query %} for "{{ query }}"{% endif %}</div>
+      </div>
+      <form method="get" class="mm-sort">
         <input type="hidden" name="q" value="{{ query }}"><input type="hidden" name="category" value="{{ selected_category }}"><input type="hidden" name="brand" value="{{ selected_brand }}">
-        <input type="hidden" name="min_price" value="{{ request.GET.min_price }}"><input type="hidden" name="max_price" value="{{ request.GET.max_price }}">
-        <select name="sort" class="form-select form-select-sm" onchange="this.form.submit()">
+        <input type="hidden" name="min_price" value="{{ min_price }}"><input type="hidden" name="max_price" value="{{ max_price }}">
+        {% if deals %}<input type="hidden" name="deals" value="1">{% endif %}
+        <label for="f-sort" class="visually-hidden">Sort by</label>
+        <select name="sort" id="f-sort" class="form-select form-select-sm" onchange="this.form.submit()">
           <option value="">Newest</option>
           <option value="price_low" {% if sort == 'price_low' %}selected{% endif %}>Price: low to high</option>
           <option value="price_high" {% if sort == 'price_high' %}selected{% endif %}>Price: high to low</option>
@@ -52,37 +81,26 @@
       </form>
     </div>
 
-    <div class="row g-3">
-      {% for product in page_obj %}
-      {% with stock=product.total_stock rating=product.average_rating %}
-      <div class="col-6 col-md-4 col-xl-3" id="product-{{ product.id }}">
-        <div class="card product-card h-100">
-          <a href="{{ product.get_absolute_url }}" class="product-media">
-            {% if product.image %}<img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy">{% else %}<div class="product-noimg"><i class="bi bi-image"></i></div>{% endif %}
-            {% if product.discount_percent %}<span class="badge rounded-pill bg-danger media-badge-tl">{{ product.discount_percent }}% off</span>{% endif %}
-            {% if stock == 0 %}<span class="badge rounded-pill badge-oos media-badge-bl">Out of stock</span>
-            {% elif stock <= 5 %}<span class="badge rounded-pill badge-pending media-badge-bl">Only {{ stock }} left!</span>{% endif %}
-          </a>
-          {% include "wishlist/_heart.html" with product=product %}
-          <div class="card-body">
-            <div class="small text-muted text-truncate">{{ product.vendor.store.store_name|default:product.vendor.username }}</div>
-            <a href="{{ product.get_absolute_url }}" class="product-title">{{ product.name }}</a>
-            <div class="stars small my-1">{% for i in "12345" %}<i class="bi bi-star{% if forloop.counter <= rating %}-fill{% endif %}"></i>{% endfor %}</div>
-            <div><strong>₹{{ product.display_price }}</strong>{% if product.discount_price %}<span class="price-strike ms-1">₹{{ product.price }}</span>{% endif %}</div>
-          </div>
-        </div>
-      </div>
-      {% endwith %}
-      {% empty %}
-      <div class="col-12"><div class="card p-4 text-center text-muted">No products match these filters. Try clearing a filter or widening the price range.</div></div>
-      {% endfor %}
+    {% if page_obj.object_list %}
+    <div class="mm-grid">
+      {% for product in page_obj %}{% include "catalog/_product_card.html" %}{% endfor %}
     </div>
+    {% else %}
+    <div class="mm-empty-compact card">
+      <i class="bi bi-search" aria-hidden="true"></i>
+      <div>
+        <strong>No products found</strong>
+        <p class="mb-0 text-muted">{% if has_filters %}No products match these filters. Try clearing a filter or widening the price range.{% else %}There are no products in the shop yet. Please check back soon.{% endif %}</p>
+      </div>
+      {% if has_filters %}<a class="btn btn-sm btn-outline-primary ms-md-auto" href="{% url 'catalog:home' %}">Clear filters</a>{% endif %}
+    </div>
+    {% endif %}
 
     {% if page_obj.has_other_pages %}
-    <nav class="mt-4"><ul class="pagination">
-      {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ query }}&category={{ selected_category }}&brand={{ selected_brand }}&min_price={{ request.GET.min_price }}&max_price={{ request.GET.max_price }}&sort={{ sort }}">Previous</a></li>{% endif %}
+    <nav class="mt-4" aria-label="Product pages"><ul class="pagination justify-content-center">
+      {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?{% if page_query %}{{ page_query }}&amp;{% endif %}page={{ page_obj.previous_page_number }}">Previous</a></li>{% endif %}
       <li class="page-item disabled"><span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
-      {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ query }}&category={{ selected_category }}&brand={{ selected_brand }}&min_price={{ request.GET.min_price }}&max_price={{ request.GET.max_price }}&sort={{ sort }}">Next</a></li>{% endif %}
+      {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?{% if page_query %}{{ page_query }}&amp;{% endif %}page={{ page_obj.next_page_number }}">Next</a></li>{% endif %}
     </ul></nav>
     {% endif %}
   </section>
