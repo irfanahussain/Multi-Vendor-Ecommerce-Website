@@ -1,4 +1,5 @@
 {% extends "dashboard/admin_base.html" %}
+{% load admin_extras %}
 {% block title %}Admin Dashboard{% endblock %}
 {% block page_title %}Platform overview{% endblock %}
 {% block admin_content %}
@@ -32,14 +33,23 @@
     {% endif %}
 
     <div class="card">
-      <div class="card-header bg-white fw-semibold">Recent orders</div>
+      <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <span>Recent orders</span>
+        <a class="small fw-semibold" href="{% url 'dashboard:admin_orders' %}">View all <i class="bi bi-arrow-right"></i></a>
+      </div>
       <div class="table-responsive"><table class="table align-middle mb-0">
-        <thead><tr><th>Order</th><th>Customer</th><th>Total</th><th>Date</th></tr></thead>
+        <thead><tr><th>Order</th><th>Customer</th><th class="text-end">Total</th><th>Payment</th><th>Date</th></tr></thead>
         <tbody>
         {% for order in recent_orders %}
-          <tr><td>{{ order.order_number }}</td><td>{{ order.customer.username }}</td><td>₹{{ order.total_amount }}</td><td>{{ order.created_at|date:"M d, Y" }}</td></tr>
+          <tr>
+            <td><a class="fw-semibold" href="{% url 'dashboard:admin_order_detail' order.pk %}">{{ order.order_number }}</a></td>
+            <td>{{ order.customer.username }}</td>
+            <td class="text-end">₹{{ order.total_amount }}</td>
+            <td><span class="badge rounded-pill {{ order.payment_status|admin_badge }}">{{ order.get_payment_status_display }}</span></td>
+            <td class="small text-muted text-nowrap">{{ order.created_at|date:"M d, Y" }}</td>
+          </tr>
         {% empty %}
-          <tr><td colspan="4" class="text-center text-muted py-4">No orders yet.</td></tr>
+          <tr><td colspan="5"><div class="mm-empty py-4"><div class="mm-empty-icon"><i class="bi bi-receipt fs-3"></i></div><h5>No orders yet</h5><p class="mb-0">Orders appear here as soon as customers check out.</p></div></td></tr>
         {% endfor %}
         </tbody>
       </table></div>

@@ -22,3 +22,13 @@ _BADGES = {
 def admin_badge(status):
     """Badge classes for a status value, e.g. {{ obj.status|admin_badge }}."""
     return _BADGES.get(status, 'bg-secondary')
+
+
+@register.simple_tag
+def pending_approval_count():
+    """Vendors + products waiting for approval, shown as the header notification badge.
+    Only called from admin_base.html, which every admin page extends."""
+    from vendors.models import VendorStore
+    from catalog.models import Product
+    return (VendorStore.objects.filter(status=VendorStore.Status.PENDING).count()
+            + Product.objects.filter(status=Product.Status.PENDING).count())

@@ -804,9 +804,12 @@ class ProductsPageTests(BaseAdminTestCase):
             self.assertEqual(self.live.status, Product.Status.ACTIVE)
 
     def test_deactivated_product_disappears_from_the_shop(self):
-        self.assertContains(self.client.get(reverse('catalog:home')), 'Prod PL1')
+        # Check the shop's product list itself, not the page text: the admin's
+        # "Prod PL1 is now Inactive" flash message is shown on the next page load.
+        shown = lambda: [p.pk for p in self.client.get(reverse('catalog:home')).context['page_obj']]
+        self.assertIn(self.live.pk, shown())
         self.set(self.live, 'inactive')
-        self.assertNotContains(self.client.get(reverse('catalog:home')), 'Prod PL1')
+        self.assertNotIn(self.live.pk, shown())
 
     def test_approval_forms_can_return_to_the_products_page(self):
         url = reverse('dashboard:approve_product', args=[self.waiting.pk])
@@ -966,3 +969,45 @@ class DjangoAdminGateTests(BaseAdminTestCase):
             self.assertFalse(user.is_super_admin_role)
         self.login(self.staff_admin)
         self.assertEqual(self.client.get(reverse('admin:accounts_user_changelist')).status_code, 403)
+
+
+# =============================================================================
+# Layout: shared compact dashboard shell, overview content, every sidebar page opens
+# =============================================================================
+
+class AdminLayoutTests(BaseAdminTestCase):
+    PAGES = ['admin_dashboard', 'admin_approvals', 'admin_vendors', 'admin_customers', 'admin_categories',
+             'admin_brands', 'admin_products', 'admin_orders', 'admin_coupons', 'admin_promotions',
+             'admin_returns', 'admin_refunds', 'admin_commissions', 'admin_reports', 'admin_settings']
+
+    def test_every_sidebar_page_opens_directly_for_every_admin_type(self):
+        for user in (self.admin, self.staff_admin, self.super_admin):
+            self.login(user)
+            for name in self.PAGES:
+                resp = self.client.get(reverse(f'dashboard:{name}'))
+                with self.subTest(user=user.username, page=name):
+                    self.assertEqual(resp.status_code, 200)       # no redirect, least of all to /admin/
+                    self.assertContains(resp, 'mm-dash-side')    # shared compact sidebar column
+                    self.assertContains(resp, 'mm-dash-head')    # shared page header
+
+    def test_overview_recent_orders_link_to_the_custom_order_page(self):
+        vo, _ = make_vendor_order(self.customer, self.vendor, number='ORD-LAYOUT1')
+        self.login(self.admin)
+        resp = self.client.get(reverse('dashboard:admin_dashboard'))
+        self.assertContains(resp, 'ORD-LAYOUT1')
+        self.assertContains(resp, f'href="{reverse("dashboard:admin_order_detail", args=[vo.order.pk])}"')
+        self.assertContains(resp, f'href="{reverse("dashboard:admin_orders")}"')
+
+    def test_overview_empty_state_and_stat_cards(self):
+        self.login(self.admin)
+        resp = self.client.get(reverse('dashboard:admin_dashboard'))
+        self.assertContains(resp, 'No orders yet')
+        for label in ('Vendors', 'Customers', 'Products', 'Orders', 'Sales', 'Commission'):
+            self.assertContains(resp, f'<div class="kpi-label">{label}</div>', html=False)
+
+    def test_vendor_dashboard_uses_the_same_shell(self):
+        self.login(self.vendor)
+        resp = self.client.get(reverse('vendors:dashboard'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'mm-dash-side')
+        self.assertContains(resp, 'vend store')
