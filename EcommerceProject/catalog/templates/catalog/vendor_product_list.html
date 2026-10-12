@@ -12,7 +12,7 @@
         <tr>
             <td>{{ product.name }}</td>
             <td>{{ product.sku }}</td>
-            <td>₹{{ product.display_price }}</td>
+            <td>₹{{ product.display_price|money }}</td>
             <td>{{ product.total_stock }}</td>
             <td><span class="badge bg-secondary badge-status">{{ product.get_status_display }}</span></td>
             <td>

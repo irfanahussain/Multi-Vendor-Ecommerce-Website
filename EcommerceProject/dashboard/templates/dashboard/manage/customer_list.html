@@ -23,7 +23,7 @@
         <td>{{ c.email|default:"—" }}</td>
         <td class="small text-muted">{{ c.date_joined|date:"M d, Y" }}</td>
         <td class="text-center">{{ c.order_count }}</td>
-        <td class="text-end">₹{{ c.spent|default:0 }}</td>
+        <td class="text-end">₹{{ c.spent|default:0|money }}</td>
         <td><span class="badge rounded-pill {% if c.is_active %}badge-approved{% else %}badge-rejected{% endif %}">{% if c.is_active %}Active{% else %}Blocked{% endif %}</span></td>
         <td class="text-end text-nowrap">
           <form method="post" action="{% url 'dashboard:admin_customer_toggle' c.pk %}" class="d-inline{% if c.is_active %} confirm-action" data-confirm="Block {{ c.username }}? They will not be able to sign in.{% endif %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button type="submit" class="btn btn-sm {% if c.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}">{% if c.is_active %}Block{% else %}Unblock{% endif %}</button></form>

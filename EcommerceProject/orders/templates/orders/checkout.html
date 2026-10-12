@@ -34,7 +34,7 @@
                 <div class="mb-3">
                     <div class="vendor-banner mb-2"><i class="bi bi-shop me-1"></i> <strong>{{ g.vendor.store.store_name|default:g.vendor.username }}</strong></div>
                     {% for item in g.lines %}
-                    <div class="d-flex justify-content-between small px-2"><span>{{ item.variant.product.name }} ({{ item.variant.name }}) × {{ item.quantity }}</span><span>₹{{ item.line_total }}</span></div>
+                    <div class="d-flex justify-content-between small px-2"><span>{{ item.variant.product.name }} ({{ item.variant.name }}) × {{ item.quantity }}</span><span>₹{{ item.line_total|money }}</span></div>
                     {% endfor %}
                 </div>
                 {% endfor %}
@@ -57,15 +57,15 @@
         <div class="card p-3">
             <h6>Order summary</h6>
             {% for item in checkout_items %}
-            <div class="d-flex justify-content-between small"><span>{{ item.variant.product.name }} ({{ item.variant.name }}) x{{ item.quantity }}</span><span>₹{{ item.line_total }}</span></div>
+            <div class="d-flex justify-content-between small"><span>{{ item.variant.product.name }} ({{ item.variant.name }}) x{{ item.quantity }}</span><span>₹{{ item.line_total|money }}</span></div>
             {% endfor %}
             <hr>
-            <div class="d-flex justify-content-between"><span>Subtotal</span><span>₹{{ subtotal }}</span></div>
-            {% if coupon %}<div class="d-flex justify-content-between text-success"><span>Discount ({{ coupon.code }})</span><span>-₹{{ discount }}</span></div>{% endif %}
-            <div class="d-flex justify-content-between"><span>Tax</span><span>₹{{ tax_amount }}</span></div>
-            <div class="d-flex justify-content-between"><span>Shipping</span><span>{% if shipping_charge == 0 %}Free{% else %}₹{{ shipping_charge }}{% endif %}</span></div>
+            <div class="d-flex justify-content-between"><span>Subtotal</span><span>₹{{ subtotal|money }}</span></div>
+            {% if coupon %}<div class="d-flex justify-content-between text-success"><span>Discount ({{ coupon.code }})</span><span>-₹{{ discount|money }}</span></div>{% endif %}
+            <div class="d-flex justify-content-between"><span>Tax</span><span>₹{{ tax_amount|money }}</span></div>
+            <div class="d-flex justify-content-between"><span>Shipping</span><span>{% if shipping_charge == 0 %}Free{% else %}₹{{ shipping_charge|money }}{% endif %}</span></div>
             <hr>
-            <div class="d-flex justify-content-between fw-bold"><span>Total</span><span>₹{{ total }}</span></div>
+            <div class="d-flex justify-content-between fw-bold"><span>Total</span><span>₹{{ total|money }}</span></div>
         </div>
     </div>
 </div>

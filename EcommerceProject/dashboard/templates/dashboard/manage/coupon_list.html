@@ -21,8 +21,8 @@
     {% for c in page_obj %}
       <tr>
         <td class="fw-semibold">{{ c.code }}</td>
-        <td>{% if c.discount_type == 'percent' %}{{ c.discount_value|floatformat:"-2" }}%{% if c.max_discount %}<div class="small text-muted">max ₹{{ c.max_discount|floatformat:"-2" }}</div>{% endif %}{% else %}₹{{ c.discount_value|floatformat:"-2" }}{% endif %}</td>
-        <td>₹{{ c.min_order_amount|floatformat:"-2" }}</td>
+        <td>{% if c.discount_type == 'percent' %}{{ c.discount_value|floatformat:"-2" }}%{% if c.max_discount %}<div class="small text-muted">max ₹{{ c.max_discount|money }}</div>{% endif %}{% else %}₹{{ c.discount_value|floatformat:"-2" }}{% endif %}</td>
+        <td>₹{{ c.min_order_amount|money }}</td>
         <td class="small">{{ c.start_date|date:"M d, Y" }} – {{ c.expiry_date|date:"M d, Y" }}</td>
         <td class="text-center">{{ c.used_count }}{% if c.usage_limit %} / {{ c.usage_limit }}{% endif %}</td>
         <td>

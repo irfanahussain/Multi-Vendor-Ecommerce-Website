@@ -23,7 +23,7 @@
         <td class="fw-semibold">{{ p.name }}<div class="small text-muted fw-normal">{{ p.sku }}{% if p.brand %} · {{ p.brand.name }}{% endif %}</div></td>
         <td>{{ p.vendor.username }}</td>
         <td class="text-muted">{{ p.category.name|default:"—" }}</td>
-        <td class="text-end">₹{{ p.display_price }}</td>
+        <td class="text-end">₹{{ p.display_price|money }}</td>
         <td><span class="badge rounded-pill {{ p.status|admin_badge }}">{{ p.get_status_display }}</span></td>
         <td class="text-end text-nowrap">
           {% if p.status != 'active' %}

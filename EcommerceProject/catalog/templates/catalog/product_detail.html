@@ -34,8 +34,8 @@
       <span class="text-muted small ms-1">({{ reviews|length }} review{{ reviews|length|pluralize }})</span></div>
 
     <div class="mm-pd-price d-flex align-items-center flex-wrap gap-2">
-      <span id="variantPrice">₹{{ variants.0.effective_price|default:product.display_price }}</span>
-      <span id="variantOld" class="price-strike fs-6">{% if product.discount_price and not variants.0.price %}₹{{ product.price }}{% endif %}</span>
+      <span id="variantPrice">₹{{ variants.0.effective_price|default:product.display_price|money }}</span>
+      <span id="variantOld" class="price-strike fs-6">{% if product.discount_price and not variants.0.price %}₹{{ product.price|money }}{% endif %}</span>
       {% if product.discount_price %}<span class="badge bg-success">{{ product.discount_percent }}% off</span>{% endif %}
     </div>
     {% if product.short_description %}<p class="mm-pd-short">{{ product.short_description }}</p>{% endif %}
@@ -51,7 +51,7 @@
           <label class="form-label d-block">Choose option</label>
           {% for v in variants %}
           <input type="radio" class="btn-check" name="variant" id="var{{ v.id }}" value="{{ v.id }}" autocomplete="off"
-                 data-price="₹{{ v.effective_price }}" data-old="{% if product.discount_price and not v.price %}₹{{ product.price }}{% endif %}"
+                 data-price="₹{{ v.effective_price|money }}" data-old="{% if product.discount_price and not v.price %}₹{{ product.price|money }}{% endif %}"
                  data-stock="{{ v.stock_quantity }}" data-image="{% if v.image %}{{ v.image.url }}{% endif %}"
                  data-action="{% url 'orders:cart_add' v.id %}" {% if forloop.first %}checked{% endif %}>
           <label class="btn btn-outline-primary btn-sm me-1 mb-1" for="var{{ v.id }}">{{ v.name }}{% if v.stock_quantity == 0 %} <small>(Out of stock)</small>{% endif %}</label>

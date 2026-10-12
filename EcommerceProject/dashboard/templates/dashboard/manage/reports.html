@@ -13,10 +13,10 @@
 {% endblock %}
 {% block admin_content %}
 <div class="row g-3 mb-4">
-  <div class="col-6 col-xl-3"><div class="card kpi-card h-100"><div class="card-body"><div class="kpi-label">Orders placed</div><div class="kpi-value">{{ order_count }}</div><div class="kpi-sub">₹{{ gross_sales }} order totals</div></div></div></div>
-  <div class="col-6 col-xl-3"><div class="card kpi-card h-100"><div class="card-body"><div class="kpi-label">Vendor sales</div><div class="kpi-value">₹{{ sales }}</div><div class="kpi-sub">Excluding cancelled / returned</div></div></div></div>
-  <div class="col-6 col-xl-3"><div class="card kpi-card h-100"><div class="card-body"><div class="kpi-label">Platform commission</div><div class="kpi-value">₹{{ commission }}</div><div class="kpi-sub">Vendors earned ₹{{ earnings }}</div></div></div></div>
-  <div class="col-6 col-xl-3"><div class="card kpi-card h-100"><div class="card-body"><div class="kpi-label">Refunded</div><div class="kpi-value">₹{{ refunded }}</div><div class="kpi-sub">Completed refunds</div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card kpi-card h-100"><div class="card-body"><div class="kpi-label">Orders placed</div><div class="kpi-value">{{ order_count }}</div><div class="kpi-sub">₹{{ gross_sales|money }} order totals</div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card kpi-card h-100"><div class="card-body"><div class="kpi-label">Vendor sales</div><div class="kpi-value">₹{{ sales|money }}</div><div class="kpi-sub">Excluding cancelled / returned</div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card kpi-card h-100"><div class="card-body"><div class="kpi-label">Platform commission</div><div class="kpi-value">₹{{ commission|money }}</div><div class="kpi-sub">Vendors earned ₹{{ earnings|money }}</div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card kpi-card h-100"><div class="card-body"><div class="kpi-label">Refunded</div><div class="kpi-value">₹{{ refunded|money }}</div><div class="kpi-sub">Completed refunds</div></div></div></div>
   <div class="col-6 col-xl-3"><div class="card kpi-card h-100"><div class="card-body"><div class="kpi-label">New customers</div><div class="kpi-value">{{ new_customers }}</div></div></div></div>
   <div class="col-6 col-xl-3"><div class="card kpi-card h-100"><div class="card-body"><div class="kpi-label">New vendors</div><div class="kpi-value">{{ new_vendors }}</div></div></div></div>
 </div>
@@ -40,7 +40,7 @@
       <thead><tr><th>Vendor</th><th class="text-center">Orders</th><th class="text-end">Sales</th><th class="text-end">Commission</th></tr></thead>
       <tbody>
       {% for v in top_vendors %}
-        <tr><td>{{ v.vendor__store__store_name|default:v.vendor__username }}</td><td class="text-center">{{ v.orders }}</td><td class="text-end">₹{{ v.sales }}</td><td class="text-end">₹{{ v.commission }}</td></tr>
+        <tr><td>{{ v.vendor__store__store_name|default:v.vendor__username }}</td><td class="text-center">{{ v.orders }}</td><td class="text-end">₹{{ v.sales|money }}</td><td class="text-end">₹{{ v.commission|money }}</td></tr>
       {% empty %}
         <tr><td colspan="4" class="text-center text-muted py-4">No sales in this period.</td></tr>
       {% endfor %}
@@ -52,7 +52,7 @@
       <thead><tr><th>Product</th><th class="text-end">Units</th><th class="text-end">Revenue</th></tr></thead>
       <tbody>
       {% for p in top_products %}
-        <tr><td>{{ p.product_name }}</td><td class="text-end">{{ p.units }}</td><td class="text-end">₹{{ p.revenue }}</td></tr>
+        <tr><td>{{ p.product_name }}</td><td class="text-end">{{ p.units }}</td><td class="text-end">₹{{ p.revenue|money }}</td></tr>
       {% empty %}
         <tr><td colspan="3" class="text-center text-muted py-4">No sales in this period.</td></tr>
       {% endfor %}

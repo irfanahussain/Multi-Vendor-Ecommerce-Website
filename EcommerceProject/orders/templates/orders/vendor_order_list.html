@@ -10,7 +10,7 @@
         <tr>
             <td>{{ vo.order.order_number }}</td>
             <td>{{ vo.order.customer.username }}</td>
-            <td>₹{{ vo.subtotal }}</td>
+            <td>₹{{ vo.subtotal|money }}</td>
             <td><span class="badge rounded-pill {{ vo.status|status_badge }}">{{ vo.get_status_display }}</span></td>
             <td><a href="{% url 'orders:vendor_order_detail' vo.id %}" class="btn btn-sm btn-outline-primary">Manage</a></td>
         </tr>

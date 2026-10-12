@@ -5,9 +5,9 @@
 {% block admin_content %}
 <div class="row g-3 mb-3">
   <div class="col-6 col-xl-3"><div class="card kpi-card h-100"><div class="card-body"><div class="kpi-label">Vendor orders</div><div class="kpi-value">{{ totals.count }}</div><div class="kpi-sub">Excluding cancelled / returned / refunded</div></div></div></div>
-  <div class="col-6 col-xl-3"><div class="card kpi-card h-100"><div class="card-body"><div class="kpi-label">Sales</div><div class="kpi-value">₹{{ totals.sales }}</div><div class="kpi-sub">Vendor order subtotals</div></div></div></div>
-  <div class="col-6 col-xl-3"><div class="card kpi-card h-100"><div class="card-body"><div class="kpi-label">Platform commission</div><div class="kpi-value">₹{{ totals.commission }}</div><div class="kpi-sub">Earned by MultiMart</div></div></div></div>
-  <div class="col-6 col-xl-3"><div class="card kpi-card h-100"><div class="card-body"><div class="kpi-label">Vendor earnings</div><div class="kpi-value">₹{{ totals.earnings }}</div><div class="kpi-sub">After commission</div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card kpi-card h-100"><div class="card-body"><div class="kpi-label">Sales</div><div class="kpi-value">₹{{ totals.sales|money }}</div><div class="kpi-sub">Vendor order subtotals</div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card kpi-card h-100"><div class="card-body"><div class="kpi-label">Platform commission</div><div class="kpi-value">₹{{ totals.commission|money }}</div><div class="kpi-sub">Earned by MultiMart</div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card kpi-card h-100"><div class="card-body"><div class="kpi-label">Vendor earnings</div><div class="kpi-value">₹{{ totals.earnings|money }}</div><div class="kpi-sub">After commission</div></div></div></div>
 </div>
 <div class="card">
   <div class="card-header bg-white">
@@ -33,10 +33,10 @@
         <td>{{ vo.vendor.store.store_name|default:vo.vendor.username }}</td>
         <td class="small text-muted">{{ vo.created_at|date:"M d, Y" }}</td>
         <td><span class="badge rounded-pill {{ vo.status|admin_badge }}">{{ vo.get_status_display }}</span></td>
-        <td class="text-end">₹{{ vo.subtotal }}</td>
+        <td class="text-end">₹{{ vo.subtotal|money }}</td>
         <td class="text-end">{{ vo.commission_percent|floatformat:"-2" }}%</td>
-        <td class="text-end">₹{{ vo.commission_amount }}</td>
-        <td class="text-end">₹{{ vo.vendor_earning }}</td>
+        <td class="text-end">₹{{ vo.commission_amount|money }}</td>
+        <td class="text-end">₹{{ vo.vendor_earning|money }}</td>
       </tr>
     {% empty %}
       <tr><td colspan="8"><div class="mm-empty py-4"><div class="mm-empty-icon"><i class="bi bi-percent fs-3"></i></div><h5>{% if q or status or vendor_id %}No vendor orders match your filters{% else %}No vendor orders yet{% endif %}</h5><p class="mb-0">{% if q or status or vendor_id %}Try clearing the filters.{% else %}Commission is recorded here as customers place orders.{% endif %}</p></div></td></tr>

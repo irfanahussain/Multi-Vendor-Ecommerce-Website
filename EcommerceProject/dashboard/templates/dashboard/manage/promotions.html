@@ -32,7 +32,7 @@
     <div class="card-header bg-white fw-semibold">Running now</div>
     <ul class="list-group list-group-flush">
       {% for c in running %}
-      <li class="list-group-item d-flex justify-content-between align-items-center"><span><span class="fw-semibold">{{ c.code }}</span> <span class="text-muted small">{% if c.discount_type == 'percent' %}{{ c.discount_value|floatformat:"-2" }}% off{% else %}₹{{ c.discount_value|floatformat:"-2" }} off{% endif %}</span></span><span class="small text-muted">used {{ c.used_count }}{% if c.usage_limit %}/{{ c.usage_limit }}{% endif %}</span></li>
+      <li class="list-group-item d-flex justify-content-between align-items-center"><span><span class="fw-semibold">{{ c.code }}</span> <span class="text-muted small">{% if c.discount_type == 'percent' %}{{ c.discount_value|floatformat:"-2" }}% off{% else %}₹{{ c.discount_value|money }} off{% endif %}</span></span><span class="small text-muted">used {{ c.used_count }}{% if c.usage_limit %}/{{ c.usage_limit }}{% endif %}</span></li>
       {% empty %}<li class="list-group-item text-muted">No promotions are running. <a href="{% url 'dashboard:admin_coupon_add' %}">Create a coupon</a>.</li>{% endfor %}
     </ul></div></div>
   <div class="col-lg-6"><div class="card h-100">

@@ -25,7 +25,7 @@
   </section>
 
   <section class="lp-trust">
-    <div><i class="bi bi-truck"></i><div><strong>Free shipping</strong><span>On orders over ₹{{ free_shipping|floatformat:0 }}</span></div></div>
+    <div><i class="bi bi-truck"></i><div><strong>Free shipping</strong><span>On orders over ₹{{ free_shipping|money }}</span></div></div>
     <div><i class="bi bi-shop"></i><div><strong>Approved vendors</strong><span>Every store is reviewed</span></div></div>
     <div><i class="bi bi-arrow-repeat"></i><div><strong>Easy returns</strong><span>Request from My Returns</span></div></div>
     <div><i class="bi bi-box-seam"></i><div><strong>Split orders</strong><span>Each store ships its own items</span></div></div>
@@ -58,7 +58,7 @@
           <span class="lp-card-name">{{ p.name }}</span>
           <span class="small text-muted">{{ p.vendor.store.store_name|default:p.vendor.username }}</span>
           <span class="stars small">{% for i in "12345" %}<i class="bi bi-star{% if forloop.counter <= p.average_rating %}-fill{% endif %}"></i>{% endfor %}</span>
-          <span><strong>₹{{ p.display_price }}</strong>{% if p.discount_price %} <s class="text-muted small">₹{{ p.price }}</s>{% endif %}</span>
+          <span><strong>₹{{ p.display_price|money }}</strong>{% if p.discount_price %} <s class="text-muted small">₹{{ p.price|money }}</s>{% endif %}</span>
         </a>
         {% empty %}<p class="text-muted">No products yet. Approve products from the admin dashboard to show them here.</p>{% endfor %}
       </div>

@@ -39,7 +39,7 @@
               <tr>
                 <td class="fw-semibold">{{ product.name }}</td>
                 <td class="text-muted">{{ product.vendor.username }}</td>
-                <td>₹{{ product.display_price }}</td>
+                <td>₹{{ product.display_price|money }}</td>
                 <td class="text-end text-nowrap">
                   <form method="post" action="{% url 'dashboard:approve_product' product.id %}" class="d-inline js-ajax-form" data-modal="Approve {{ product.name }}?" data-ok="Product approved" data-count="products" data-success="remove-row">{% csrf_token %}<button type="submit" class="btn btn-sm btn-success">Approve</button></form>
                   <form method="post" action="{% url 'dashboard:reject_product' product.id %}" class="d-inline js-ajax-form" data-modal="Reject {{ product.name }}?" data-ok="Product rejected" data-count="products" data-success="remove-row" data-danger="1">{% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-danger">Reject</button></form>

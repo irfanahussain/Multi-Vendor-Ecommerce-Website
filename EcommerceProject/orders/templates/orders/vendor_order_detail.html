@@ -7,16 +7,16 @@
     <thead><tr><th>Product</th><th>Qty</th><th>Total</th></tr></thead>
     <tbody>
     {% for item in vendor_order.items.all %}
-        <tr><td>{{ item.product_name }} ({{ item.variant_name }})</td><td>{{ item.quantity }}</td><td>₹{{ item.line_total }}</td></tr>
+        <tr><td>{{ item.product_name }} ({{ item.variant_name }})</td><td>{{ item.quantity }}</td><td>₹{{ item.line_total|money }}</td></tr>
     {% endfor %}
     </tbody>
 </table></div>
 
 <div class="row">
     <div class="col-md-4">
-        <p>Subtotal: ₹{{ vendor_order.subtotal }}</p>
-        <p>Commission ({{ vendor_order.commission_percent }}%): -₹{{ vendor_order.commission_amount }}</p>
-        <p><strong>Your earning: ₹{{ vendor_order.vendor_earning }}</strong></p>
+        <p>Subtotal: ₹{{ vendor_order.subtotal|money }}</p>
+        <p>Commission ({{ vendor_order.commission_percent }}%): -₹{{ vendor_order.commission_amount|money }}</p>
+        <p><strong>Your earning: ₹{{ vendor_order.vendor_earning|money }}</strong></p>
     </div>
     <div class="col-md-4">
         <p>Current status: <span class="badge bg-secondary">{{ vendor_order.get_status_display }}</span></p>

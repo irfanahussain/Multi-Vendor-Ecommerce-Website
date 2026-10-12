@@ -17,7 +17,7 @@
         <tr>
             <td>{{ order.order_number }}</td>
             <td>{{ order.created_at|date:"M d, Y" }}</td>
-            <td>₹{{ order.total_amount }}</td>
+            <td>₹{{ order.total_amount|money }}</td>
             <td><a href="{% url 'orders:order_detail' order.order_number %}" class="btn btn-sm btn-outline-primary">View</a></td>
         </tr>
     {% empty %}

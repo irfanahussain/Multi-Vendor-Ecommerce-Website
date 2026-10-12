@@ -2,25 +2,35 @@
 {% load admin_extras %}
 {% block title %}Admin Dashboard{% endblock %}
 {% block page_title %}Platform overview{% endblock %}
+{% block page_actions %}
+<form method="get" class="d-flex gap-2 align-items-center">
+  <label class="visually-hidden" for="range">Chart time range</label>
+  <select id="range" name="range" class="form-select form-select-sm" onchange="this.form.submit()">
+    {% for value, label in range_options %}<option value="{{ value }}" {% if range_key == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+  <noscript><button class="btn btn-sm btn-outline-primary" type="submit">Apply</button></noscript>
+</form>
+{% endblock %}
 {% block admin_content %}
+    {# ---- Summary cards ---- #}
     <div class="row g-3 mb-4">
       <div class="col-6 col-xl-4"><div class="card kpi-card h-100"><div class="card-body d-flex justify-content-between">
-        <div><div class="kpi-label">Vendors</div><div class="kpi-value">{{ total_vendors }}</div><div class="kpi-sub">{{ pending_vendors }} awaiting approval</div></div>
+        <div><div class="kpi-label">Vendors</div><div class="kpi-value">{{ total_vendors }}</div><div class="kpi-sub">{{ approved_vendors }} approved · {{ pending_vendors }} awaiting approval</div></div>
         <div class="kpi-icon"><i class="bi bi-shop"></i></div></div></div></div>
       <div class="col-6 col-xl-4"><div class="card kpi-card h-100"><div class="card-body d-flex justify-content-between">
-        <div><div class="kpi-label">Customers</div><div class="kpi-value">{{ total_customers }}</div><div class="kpi-sub">Registered accounts</div></div>
+        <div><div class="kpi-label">Customers</div><div class="kpi-value">{{ total_customers }}</div><div class="kpi-sub">+{{ new_customers_30d }} in the last 30 days</div></div>
         <div class="kpi-icon"><i class="bi bi-people"></i></div></div></div></div>
       <div class="col-6 col-xl-4"><div class="card kpi-card h-100"><div class="card-body d-flex justify-content-between">
-        <div><div class="kpi-label">Products</div><div class="kpi-value">{{ total_products }}</div><div class="kpi-sub">{{ pending_products }} awaiting approval</div></div>
+        <div><div class="kpi-label">Products</div><div class="kpi-value">{{ total_products }}</div><div class="kpi-sub">{{ active_products }} active · {{ pending_products }} awaiting approval</div></div>
         <div class="kpi-icon"><i class="bi bi-box-seam"></i></div></div></div></div>
       <div class="col-6 col-xl-4"><div class="card kpi-card h-100"><div class="card-body d-flex justify-content-between">
-        <div><div class="kpi-label">Orders</div><div class="kpi-value">{{ total_orders }}</div><div class="kpi-sub">All time</div></div>
+        <div><div class="kpi-label">Orders</div><div class="kpi-value">{{ total_orders }}</div><div class="kpi-sub">+{{ orders_30d }} in the last 30 days</div></div>
         <div class="kpi-icon"><i class="bi bi-receipt"></i></div></div></div></div>
       <div class="col-6 col-xl-4"><div class="card kpi-card h-100"><div class="card-body d-flex justify-content-between">
-        <div><div class="kpi-label">Sales</div><div class="kpi-value">₹{{ total_sales }}</div><div class="kpi-sub">Order totals</div></div>
+        <div><div class="kpi-label">Sales</div><div class="kpi-value">₹{{ total_sales|money }}</div><div class="kpi-sub">Gross order value · average ₹{{ avg_order_value|money }} per order</div></div>
         <div class="kpi-icon"><i class="bi bi-graph-up-arrow"></i></div></div></div></div>
       <div class="col-6 col-xl-4"><div class="card kpi-card h-100"><div class="card-body d-flex justify-content-between">
-        <div><div class="kpi-label">Commission</div><div class="kpi-value">₹{{ total_commission }}</div><div class="kpi-sub">Earned by the platform</div></div>
+        <div><div class="kpi-label">Commission</div><div class="kpi-value">₹{{ total_commission|money }}</div><div class="kpi-sub">Earned by the platform, excluding cancelled and returned</div></div>
         <div class="kpi-icon"><i class="bi bi-percent"></i></div></div></div></div>
     </div>
 
@@ -32,24 +42,199 @@
     </div>
     {% endif %}
 
+    {# ---- Charts ---- #}
+    <div class="row g-3 mb-3">
+      <div class="col-12 col-xl-6"><div class="card mm-chart-card h-100">
+        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+          <span class="fw-semibold">Sales over time</span>
+          <span class="mm-legend"><i class="mm-dot mm-dot-sales"></i>Gross order value</span>
+        </div>
+        <div class="card-body">
+          {% if sales_chart.has_data %}
+          <div class="mm-chart-scroll">
+            <div class="mm-chart mm-chart-sales" role="img" aria-label="Order value per {{ sales_chart.period }}">
+              {% for bar in sales_chart.bars %}<div class="mm-chart-col" data-tip="{{ bar.title }}"><div class="mm-chart-bar" style="height: {{ bar.pct }}%"></div></div>{% endfor %}
+            </div>
+            <div class="mm-chart-labels" aria-hidden="true">
+              {% for bar in sales_chart.bars %}<span class="{% if range_key == '12m' %}{% if forloop.last %}mm-lbl-major{% elif forloop.revcounter0 == 1 %}mm-lbl-minor{% elif forloop.counter0|divisibleby:2 %}mm-lbl-major{% else %}mm-lbl-minor{% endif %}{% elif forloop.last %}mm-lbl-end{% elif forloop.counter0|divisibleby:10 %}mm-lbl-major{% else %}mm-lbl-minor{% endif %}">{% if bar.show_label %}{{ bar.label }}{% endif %}</span>{% endfor %}
+            </div>
+          </div>
+          <div class="mm-chart-foot"><span class="mm-total-pill">Total ₹{{ sales_chart.total|money }}</span><span>{% if range_key == '12m' %}Last 12 months{% else %}Last 30 days{% endif %}</span></div>
+          {% else %}
+          <div class="mm-chart-empty">No orders in this period yet.</div>
+          {% endif %}
+        </div>
+        <div class="mm-chart-tip" hidden></div>
+      </div></div>
+      <div class="col-12 col-xl-6"><div class="card mm-chart-card h-100">
+        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+          <span class="fw-semibold">Orders over time</span>
+          <span class="mm-legend"><i class="mm-dot mm-dot-orders"></i>Number of orders</span>
+        </div>
+        <div class="card-body">
+          {% if orders_chart.has_data %}
+          <div class="mm-chart-scroll">
+            <div class="mm-chart mm-chart-orders" role="img" aria-label="Orders per {{ orders_chart.period }}">
+              {% for bar in orders_chart.bars %}<div class="mm-chart-col" data-tip="{{ bar.title }}"><div class="mm-chart-bar" style="height: {{ bar.pct }}%"></div></div>{% endfor %}
+            </div>
+            <div class="mm-chart-labels" aria-hidden="true">
+              {% for bar in orders_chart.bars %}<span class="{% if range_key == '12m' %}{% if forloop.last %}mm-lbl-major{% elif forloop.revcounter0 == 1 %}mm-lbl-minor{% elif forloop.counter0|divisibleby:2 %}mm-lbl-major{% else %}mm-lbl-minor{% endif %}{% elif forloop.last %}mm-lbl-end{% elif forloop.counter0|divisibleby:10 %}mm-lbl-major{% else %}mm-lbl-minor{% endif %}">{% if bar.show_label %}{{ bar.label }}{% endif %}</span>{% endfor %}
+            </div>
+          </div>
+          <div class="mm-chart-foot"><span class="mm-total-pill mm-total-pill-orders">{{ orders_chart.total }} order{{ orders_chart.total|pluralize }}</span><span>{% if range_key == '12m' %}Last 12 months{% else %}Last 30 days{% endif %}</span></div>
+          {% else %}
+          <div class="mm-chart-empty">No orders in this period yet.</div>
+          {% endif %}
+        </div>
+        <div class="mm-chart-tip" hidden></div>
+      </div></div>
+    </div>
+
+    <script>
+    (function () {
+      document.querySelectorAll('.mm-chart-card').forEach(function (card) {
+        var chart = card.querySelector('.mm-chart');
+        var tip = card.querySelector('.mm-chart-tip');
+        if (!chart || !tip) return;
+        chart.addEventListener('mouseover', function (e) {
+          var col = e.target.closest('.mm-chart-col');
+          if (!col) return;
+          var c = card.getBoundingClientRect();
+          var r = col.getBoundingClientRect();
+          tip.textContent = col.getAttribute('data-tip');
+          tip.hidden = false;
+          var x = r.left - c.left + r.width / 2;
+          tip.style.left = Math.min(Math.max(x, 90), c.width - 90) + 'px';
+          tip.style.top = (r.top - c.top - 8) + 'px';
+        });
+        chart.addEventListener('mouseleave', function () { tip.hidden = true; });
+      });
+    })();
+    </script>
+
+    {# ---- Summaries ---- #}
+    <div class="row g-3 mb-3">
+      <div class="col-12 col-lg-4"><div class="card h-100">
+        <div class="card-header bg-white">Vendor order status</div>
+        <div class="card-body">
+          {% if order_status_total %}
+          <div class="mm-hbar">
+            {% for row in order_status_rows %}
+            <div class="mm-hbar-row"><span class="mm-hbar-label">{{ row.label }}</span>
+              <div class="mm-hbar-track"><div class="mm-hbar-fill" style="width: {{ row.pct }}%"></div></div>
+              <span class="mm-hbar-value">{{ row.count }}</span></div>
+            {% endfor %}
+          </div>
+          <div class="small text-muted mt-3">{{ order_status_total }} vendor order{{ order_status_total|pluralize }} in total</div>
+          {% else %}
+          <p class="text-muted small mb-0">No vendor orders yet.</p>
+          {% endif %}
+        </div>
+      </div></div>
+
+      <div class="col-12 col-lg-4"><div class="card h-100">
+        <div class="card-header bg-white">Payment summary</div>
+        <div class="table-responsive"><table class="table align-middle mb-0">
+          <thead><tr><th>Payment status</th><th class="text-end">Orders</th><th class="text-end">Amount</th></tr></thead>
+          <tbody>
+          {% for row in payment_rows %}
+            <tr><td><span class="badge rounded-pill {{ row.label|lower|admin_badge }}">{{ row.label }}</span></td>
+              <td class="text-end">{{ row.count }}</td><td class="text-end">₹{{ row.amount|money }}</td></tr>
+          {% endfor %}
+          </tbody>
+        </table></div>
+      </div></div>
+
+      <div class="col-12 col-lg-4"><div class="card h-100">
+        <div class="card-header bg-white">Sales by category</div>
+        <div class="card-body">
+          {% if category_rows %}
+          <div class="mm-hbar">
+            {% for row in category_rows %}
+            <div class="mm-hbar-row"><span class="mm-hbar-label">{{ row.label }}</span>
+              <div class="mm-hbar-track"><div class="mm-hbar-fill" style="width: {{ row.pct }}%"></div></div>
+              <span class="mm-hbar-value">₹{{ row.value|money }}</span></div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <p class="text-muted small mb-0">No sales yet. Categories appear here once items are sold.</p>
+          {% endif %}
+        </div>
+      </div></div>
+    </div>
+
+    <div class="row g-3 mb-3">
+      <div class="col-12 col-lg-6"><div class="card h-100">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <span>Product catalogue</span><span class="small text-muted">{{ total_products }} total</span>
+        </div>
+        <div class="card-body">
+          <div class="mm-subhead mt-0">By approval status</div>
+          {% if product_status_total %}
+          <div class="mm-hbar">
+            {% for row in product_status_rows %}
+            <div class="mm-hbar-row"><span class="mm-hbar-label">{{ row.label }}</span>
+              <div class="mm-hbar-track"><div class="mm-hbar-fill" style="width: {{ row.pct }}%"></div></div>
+              <span class="mm-hbar-value">{{ row.count }}</span></div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <p class="text-muted small mb-0">No products yet.</p>
+          {% endif %}
+          <div class="mm-subhead">Stock on active products</div>
+          {% if availability_total %}
+          <div class="mm-hbar">
+            {% for row in availability_rows %}
+            <div class="mm-hbar-row"><span class="mm-hbar-label">{{ row.label }}</span>
+              <div class="mm-hbar-track"><div class="mm-hbar-fill" style="width: {{ row.pct }}%"></div></div>
+              <span class="mm-hbar-value">{{ row.count }}</span></div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <p class="text-muted small mb-0">No active product variants yet.</p>
+          {% endif %}
+        </div>
+      </div></div>
+
+      <div class="col-12 col-lg-6"><div class="card h-100">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <span>Vendor approvals</span>
+          <a class="small fw-semibold" href="{% url 'dashboard:admin_approvals' %}">Review <i class="bi bi-arrow-right"></i></a>
+        </div>
+        <div class="card-body">
+          <div class="mm-hbar">
+            {% for row in vendor_status_rows %}
+            <div class="mm-hbar-row"><span class="mm-hbar-label">{{ row.label }}</span>
+              <div class="mm-hbar-track"><div class="mm-hbar-fill" style="width: {{ row.pct }}%"></div></div>
+              <span class="mm-hbar-value">{{ row.count }}</span></div>
+            {% endfor %}
+          </div>
+          <div class="small text-muted mt-3">{{ pending_vendors }} store{{ pending_vendors|pluralize }} and {{ pending_products }} product{{ pending_products|pluralize }} waiting for approval.</div>
+        </div>
+      </div></div>
+    </div>
+
+    {# ---- Recent orders ---- #}
     <div class="card">
       <div class="card-header bg-white d-flex justify-content-between align-items-center">
         <span>Recent orders</span>
         <a class="small fw-semibold" href="{% url 'dashboard:admin_orders' %}">View all <i class="bi bi-arrow-right"></i></a>
       </div>
       <div class="table-responsive"><table class="table align-middle mb-0">
-        <thead><tr><th>Order</th><th>Customer</th><th class="text-end">Total</th><th>Payment</th><th>Date</th></tr></thead>
+        <thead><tr><th>Order ID</th><th>Customer</th><th class="text-end">Total</th><th>Payment</th><th>Vendor status</th><th>Date</th></tr></thead>
         <tbody>
         {% for order in recent_orders %}
           <tr>
             <td><a class="fw-semibold" href="{% url 'dashboard:admin_order_detail' order.pk %}">{{ order.order_number }}</a></td>
             <td>{{ order.customer.username }}</td>
-            <td class="text-end">₹{{ order.total_amount }}</td>
-            <td><span class="badge rounded-pill {{ order.payment_status|admin_badge }}">{{ order.get_payment_status_display }}</span></td>
+            <td class="text-end">₹{{ order.total_amount|money }}</td>
+            <td><span class="badge rounded-pill {{ order.payment_status|admin_badge }}">{{ order.get_payment_status_display }}</span>
+              <div class="small text-muted">{{ order.get_payment_method_display }}</div></td>
+            <td>{% for vo in order.vendor_orders.all %}<span class="badge rounded-pill {{ vo.status|admin_badge }} me-1">{{ vo.get_status_display }}</span>{% empty %}<span class="text-muted small">No vendor orders</span>{% endfor %}</td>
             <td class="small text-muted text-nowrap">{{ order.created_at|date:"M d, Y" }}</td>
           </tr>
         {% empty %}
-          <tr><td colspan="5"><div class="mm-empty py-4"><div class="mm-empty-icon"><i class="bi bi-receipt fs-3"></i></div><h5>No orders yet</h5><p class="mb-0">Orders appear here as soon as customers check out.</p></div></td></tr>
+          <tr><td colspan="6"><div class="mm-empty py-4"><div class="mm-empty-icon"><i class="bi bi-receipt fs-3"></i></div><h5>No orders yet</h5><p class="mb-0">Orders appear here as soon as customers check out.</p></div></td></tr>
         {% endfor %}
         </tbody>
       </table></div>

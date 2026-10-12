@@ -15,6 +15,7 @@ from django.views.decorators.http import require_POST, require_safe
 
 from accounts.models import User
 from catalog.models import Brand, Category
+from catalog.money import format_money
 from orders.models import Coupon, Order, VendorOrder
 from returns_app.models import Refund, ReturnRequest
 
@@ -288,7 +289,7 @@ def return_refund_create(request, pk):
         else:
             amount = return_request.order_item.price * return_request.quantity
             Refund.objects.create(return_request=return_request, amount=amount)
-            messages.success(request, f'Refund of ₹{amount} opened for return #{return_request.pk}.')
+            messages.success(request, f'Refund of ₹{format_money(amount)} opened for return #{return_request.pk}.')
     return _back(request, 'dashboard:admin_returns')
 
 

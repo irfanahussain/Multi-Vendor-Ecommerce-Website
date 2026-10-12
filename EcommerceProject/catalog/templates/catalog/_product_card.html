@@ -12,7 +12,7 @@
     <div class="product-vendor text-truncate">{{ product.vendor.store.store_name|default:product.vendor.username }}</div>
     <a href="{{ product.get_absolute_url }}" class="product-title" title="{{ product.name }}">{{ product.name }}</a>
     <div class="stars small my-1" aria-label="Rated {{ rating }} out of 5">{% for i in "12345" %}<i class="bi bi-star{% if forloop.counter <= rating %}-fill{% endif %}"></i>{% endfor %}</div>
-    <div class="product-price mt-auto"><strong>₹{{ product.display_price }}</strong>{% if product.discount_price %}<span class="price-strike ms-1">₹{{ product.price }}</span>{% endif %}</div>
+    <div class="product-price mt-auto"><strong>₹{{ product.display_price|money }}</strong>{% if product.discount_price %}<span class="price-strike ms-1">₹{{ product.price|money }}</span>{% endif %}</div>
     <a href="{{ product.get_absolute_url }}" class="btn btn-outline-primary btn-sm w-100 mt-2">View details</a>
   </div>
 </article>

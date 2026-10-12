@@ -12,7 +12,7 @@
             <td>{{ r.quantity }}</td>
             <td>{{ r.reason }}</td>
             <td><span class="badge bg-secondary">{{ r.get_status_display }}</span></td>
-            <td>{% if r.refund %}&#8377;{{ r.refund.amount }} ({{ r.refund.get_status_display }}){% else %}-{% endif %}</td>
+            <td>{% if r.refund %}&#8377;{{ r.refund.amount|money }} ({{ r.refund.get_status_display }}){% else %}-{% endif %}</td>
             <td>{{ r.created_at|date:"M d, Y" }}</td>
         </tr>
     {% empty %}

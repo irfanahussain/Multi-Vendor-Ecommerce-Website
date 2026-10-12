@@ -6,7 +6,7 @@
 <div class="card">
   <div class="card-header bg-white">
     <form method="get" class="row g-2 align-items-center">
-      <div class="col-sm"><span class="small text-muted">Total in this view: <strong>₹{{ total_amount }}</strong></span></div>
+      <div class="col-sm"><span class="small text-muted">Total in this view: <strong>₹{{ total_amount|money }}</strong></span></div>
       <div class="col-sm-auto"><select name="status" class="form-select form-select-sm" aria-label="Filter by status">
         <option value="">All statuses</option>
         {% for value, label in statuses %}<option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
@@ -23,7 +23,7 @@
         <td>#{{ f.return_request.pk }} · {{ f.return_request.order_item.product_name }}</td>
         <td>{{ f.return_request.customer.username }}</td>
         <td>{{ f.return_request.order_item.vendor_order.order.order_number }}</td>
-        <td class="text-end">₹{{ f.amount }}</td>
+        <td class="text-end">₹{{ f.amount|money }}</td>
         <td><span class="badge rounded-pill {{ f.status|admin_badge }}">{{ f.get_status_display }}</span></td>
         <td class="small text-muted">{{ f.processed_at|date:"M d, Y H:i"|default:"—" }}</td>
         <td class="text-end text-nowrap">

@@ -14,6 +14,7 @@ from django.views.decorators.http import require_POST, require_safe
 
 from accounts.models import User
 from catalog.models import Product
+from catalog.money import format_money
 from orders.models import Coupon, Order, OrderItem, VendorOrder
 from returns_app.models import Refund
 from vendors.models import VendorStore
@@ -253,8 +254,8 @@ def settings_page(request):
         'config': [
             ('Default vendor commission', f'{DEFAULT_COMMISSION_PERCENT}%', 'Applied to each vendor order when it is placed.'),
             ('Tax', f'{TAX_PERCENT}%', 'Added to the taxable amount at checkout.'),
-            ('Flat shipping charge', f'₹{SHIPPING_FLAT_CHARGE}', 'Charged on orders below the free-shipping threshold.'),
-            ('Free shipping from', f'₹{FREE_SHIPPING_THRESHOLD}', 'Order subtotal at or above this ships free.'),
+            ('Flat shipping charge', f'₹{format_money(SHIPPING_FLAT_CHARGE)}', 'Charged on orders below the free-shipping threshold.'),
+            ('Free shipping from', f'₹{format_money(FREE_SHIPPING_THRESHOLD)}', 'Order subtotal at or above this ships free.'),
         ],
         'roles': [(label, role_counts.get(value, 0)) for value, label in User.Role.choices],
         'pending_vendors': VendorStore.objects.filter(status=VendorStore.Status.PENDING).count(),

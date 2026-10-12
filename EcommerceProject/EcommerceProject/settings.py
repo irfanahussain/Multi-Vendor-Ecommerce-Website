@@ -73,6 +73,7 @@ TEMPLATES = [
                 'orders.context_processors.cart_summary',
                 'catalog.context_processors.nav_categories',
             ],
+            'builtins': ['catalog.templatetags.money_extras'],
         },
     },
 ]

@@ -14,6 +14,7 @@ from catalog.models import Product
 from orders.models import Order, VendorOrder
 from accounts.models import User
 from wishlist.models import Wishlist
+from . import analytics
 # Create your views here.
 
 
@@ -73,18 +74,12 @@ def customer_dashboard(request):
 @admin_required
 @require_safe
 def admin_dashboard(request):
-    context = {
-        'active': 'overview',
-        'total_vendors': VendorStore.objects.count(),
-        'pending_vendors': VendorStore.objects.filter(status=VendorStore.Status.PENDING).count(),
-        'total_customers': User.objects.filter(role=User.Role.CUSTOMER).count(),
-        'total_products': Product.objects.count(),
-        'pending_products': Product.objects.filter(status=Product.Status.PENDING).count(),
-        'total_orders': Order.objects.count(),
-        'total_sales': Order.objects.aggregate(total=Sum('total_amount'))['total'] or 0,
-        'total_commission': VendorOrder.objects.aggregate(total=Sum('commission_amount'))['total'] or 0,
-        'recent_orders': Order.objects.select_related('customer').order_by('-created_at')[:8],
-    }
+    """Overview. All figures come from the database (see dashboard/analytics.py)."""
+    range_key = request.GET.get('range', '30d')
+    if range_key not in dict(analytics.CHART_RANGES):
+        range_key = '30d'
+    context = analytics.overview(range_key)
+    context['active'] = 'overview'
     return render(request, 'dashboard/admin_dashboard.html', context)
 
 

@@ -15,7 +15,7 @@
     <div class="card mb-3 overflow-hidden">
         <div class="vendor-banner d-flex justify-content-between align-items-center">
             <span><i class="bi bi-shop me-1"></i> <strong>{{ g.vendor.store.store_name|default:g.vendor.username }}</strong></span>
-            <span class="small text-muted">Store subtotal <strong>₹{{ g.subtotal }}</strong></span>
+            <span class="small text-muted">Store subtotal <strong>₹{{ g.subtotal|money }}</strong></span>
         </div>
 
         {% for item in g.lines %}
@@ -31,8 +31,8 @@
                 <a class="cart-name" href="{{ v.product.get_absolute_url }}">{{ v.product.name }}</a>
                 {% if v.name != 'Default' %}<div class="small text-muted">Option: {{ v.name }}</div>{% endif %}
                 <div class="small">
-                    ₹{{ v.effective_price }}
-                    {% if v.product.discount_price and not v.price %}<s class="text-muted ms-1">₹{{ v.product.price }}</s>{% endif %}
+                    ₹{{ v.effective_price|money }}
+                    {% if v.product.discount_price and not v.price %}<s class="text-muted ms-1">₹{{ v.product.price|money }}</s>{% endif %}
                     <span class="text-muted">each</span>
                 </div>
                 {% if item.quantity > v.stock_quantity %}
@@ -50,7 +50,7 @@
                     <button type="button" class="qty-plus" aria-label="Increase">+</button>
                     <button type="submit" class="cart-update">Update</button>
                 </form>
-                <div class="cart-line">₹{{ item.line_total }}</div>
+                <div class="cart-line">₹{{ item.line_total|money }}</div>
                 <form method="post" action="{% url 'orders:cart_remove' item.id %}">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-link text-danger small p-0 text-decoration-none"><i class="bi bi-trash"></i> Remove</button>
@@ -66,7 +66,7 @@
   <div class="col-lg-4">
     <div class="card p-3 cart-summary">
         <h6 class="mb-3">Order summary</h6>
-        <div class="d-flex justify-content-between mb-2"><span class="text-muted">Subtotal ({{ cart.total_items }} item{{ cart.total_items|pluralize }})</span><strong>₹{{ cart.subtotal }}</strong></div>
+        <div class="d-flex justify-content-between mb-2"><span class="text-muted">Subtotal ({{ cart.total_items }} item{{ cart.total_items|pluralize }})</span><strong>₹{{ cart.subtotal|money }}</strong></div>
 
         {% if coupon %}
         <div class="d-flex justify-content-between align-items-center mb-2 text-success">
@@ -74,7 +74,7 @@
                 <form method="post" action="{% url 'orders:remove_coupon' %}" class="d-inline">{% csrf_token %}
                     <button type="submit" class="btn btn-link text-danger small p-0 ms-1 text-decoration-none">Remove</button></form>
             </span>
-            <strong>− ₹{{ discount }}</strong>
+            <strong>− ₹{{ discount|money }}</strong>
         </div>
         {% else %}
         <form method="post" action="{% url 'orders:apply_coupon' %}" class="d-flex gap-2 my-2">

@@ -16,7 +16,7 @@
             {% if product.image %}<img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy">{% endif %}
             <div class="card-body">
                 <p class="small">{{ product.name }}</p>
-                <strong>₹{{ product.display_price }}</strong><br>
+                <strong>₹{{ product.display_price|money }}</strong><br>
                 <a href="{{ product.get_absolute_url }}" class="btn btn-sm btn-outline-primary mt-2">View</a>
             </div>
         </div>

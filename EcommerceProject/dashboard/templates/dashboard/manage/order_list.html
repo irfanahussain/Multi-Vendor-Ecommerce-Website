@@ -24,7 +24,7 @@
         <td class="small text-muted">{{ o.created_at|date:"M d, Y" }}</td>
         <td class="text-center">{{ o.vendor_count }}</td>
         <td>{{ o.get_payment_method_display }} <span class="badge rounded-pill {{ o.payment_status|admin_badge }}">{{ o.get_payment_status_display }}</span></td>
-        <td class="text-end">₹{{ o.total_amount }}</td>
+        <td class="text-end">₹{{ o.total_amount|money }}</td>
         <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{% url 'dashboard:admin_order_detail' o.pk %}">View</a></td>
       </tr>
     {% empty %}
