@@ -21,6 +21,8 @@ DEAD_STATUSES = ['cancelled', 'returned', 'refunded']
 LOW_STOCK_THRESHOLD = 5          # variants with 1 to 5 units left count as low stock
 RECENT_ORDER_COUNT = 10
 CHART_RANGES = [('30d', 'Last 30 days'), ('12m', 'Last 12 months')]
+DEFAULT_RANGE = '30d'
+RANGE_KEYS = {key for key, _ in CHART_RANGES}
 MIN_BAR_PCT = 2                  # a non-zero bar is never drawn shorter than this
 
 
@@ -101,9 +103,10 @@ def _charts(slots, period):
 
 
 def overview(range_key):
-    now = timezone.now()
     today = timezone.localdate()
-    since_30_days = now - timedelta(days=30)
+    # The "last 30 days" figures start at local midnight 29 days ago, the same first day the
+    # 30-day chart shows, so the cards and the chart always count the same orders.
+    since_30_days = timezone.make_aware(datetime.combine(today - timedelta(days=29), time.min))
 
     # Vendors and approvals
     vendor_rows, _ = _status_rows(VendorStore.objects.all(), 'status', VendorStore.Status.choices)

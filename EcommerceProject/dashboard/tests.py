@@ -166,8 +166,8 @@ class AdminNavigationTests(BaseAdminTestCase):
                 self.assertIsNone(re.search(r'href="/admin/', html))
                 self.assertNotIn('Django Admin', html)
 
-    def test_django_admin_link_is_explicit_and_only_for_staff(self):
-        for user, expected in ((self.admin, False), (self.staff_admin, True), (self.super_admin, True)):
+    def test_django_admin_link_is_only_for_super_admin(self):
+        for user, expected in ((self.admin, False), (self.staff_admin, False), (self.super_admin, True)):
             self.login(user)
             html = self.client.get(reverse('dashboard:admin_dashboard')).content.decode()
             with self.subTest(user=user.username):
@@ -940,7 +940,7 @@ class DjangoAdminGateTests(BaseAdminTestCase):
         self.assertEqual(resp.redirect_chain[-1][0], reverse('dashboard:admin_dashboard'))
         self.assertEqual(resp.status_code, 200)
         self.assertNotContains(resp, 'not authorized')
-        self.assertContains(resp, 'only for staff accounts')
+        self.assertContains(resp, 'only for Super Admin accounts')
 
     def test_customer_and_vendor_are_sent_to_their_own_dashboards(self):
         self.login(self.customer)
@@ -957,10 +957,13 @@ class DjangoAdminGateTests(BaseAdminTestCase):
         self.assertIn('/admin/login/', resp['Location'])
         self.assertEqual(self.client.get('/admin/login/').status_code, 200)
 
-    def test_staff_admin_and_super_admin_still_get_in(self):
-        for user in (self.staff_admin, self.super_admin):
-            self.login(user)
-            self.assertEqual(self.client.get('/admin/').status_code, 200)
+    def test_only_super_admin_gets_into_django_admin(self):
+        self.login(self.super_admin)
+        self.assertEqual(self.client.get('/admin/').status_code, 200)
+        self.login(self.staff_admin)     # Admin role with is_staff=True: refused
+        resp = self.client.get('/admin/')
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp['Location'], reverse('dashboard:redirect'))
 
     def test_an_admin_is_never_a_super_admin(self):
         for user in (self.admin, self.staff_admin):
@@ -968,7 +971,7 @@ class DjangoAdminGateTests(BaseAdminTestCase):
             self.assertFalse(user.is_superuser)
             self.assertFalse(user.is_super_admin_role)
         self.login(self.staff_admin)
-        self.assertEqual(self.client.get(reverse('admin:accounts_user_changelist')).status_code, 403)
+        self.assertEqual(self.client.get(reverse('admin:accounts_user_changelist')).status_code, 302)
 
 
 # =============================================================================
@@ -1011,3 +1014,52 @@ class AdminLayoutTests(BaseAdminTestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, 'mm-dash-side')
         self.assertContains(resp, 'vend store')
+
+
+# =============================================================================
+# Admin Panel header: separate from the customer navbar, customers/vendors unchanged
+# =============================================================================
+
+class AdminHeaderTests(BaseAdminTestCase):
+    CUSTOMER_NAV = ('New Arrivals', 'Best Sellers', 'mm-navbar', 'mm-store-sidebar')
+
+    def test_admin_pages_use_the_admin_panel_header_not_the_customer_navbar(self):
+        self.login(self.admin)
+        for name in ('admin_dashboard', 'admin_products', 'admin_orders'):
+            html = self.client.get(reverse(f'dashboard:{name}')).content.decode()
+            with self.subTest(page=name):
+                self.assertIn('mm-admin-header', html)
+                self.assertIn('Admin Panel', html)
+                self.assertIn('navbar-expand-xl', html)
+                for label in self.CUSTOMER_NAV:
+                    self.assertNotIn(label, html)
+
+    def test_admin_header_has_search_scopes_notifications_and_logout(self):
+        self.login(self.super_admin)
+        resp = self.client.get(reverse('dashboard:admin_dashboard'))
+        for name in ('admin_products', 'admin_vendors', 'admin_customers', 'admin_orders'):
+            self.assertContains(resp, f'<option value="{reverse(f"dashboard:{name}")}">')
+        self.assertContains(resp, 'name="q"')
+        self.assertContains(resp, f'action="{reverse("accounts:logout")}"')
+        self.assertContains(resp, f'href="{reverse("dashboard:admin_approvals")}"')
+
+    def test_notification_badge_counts_pending_approvals(self):
+        self.login(self.admin)
+        resp = self.client.get(reverse('dashboard:admin_dashboard'))
+        self.assertContains(resp, '<span class="mm-admin-badge">1</span>')   # pending_vendor from setUpTestData
+
+    def test_customer_shop_and_dashboard_keep_the_customer_navbar(self):
+        self.login(self.customer)
+        shop = self.client.get(reverse('catalog:home')).content.decode()
+        self.assertIn('New Arrivals', shop)
+        self.assertIn('mm-navbar', shop)
+        self.assertNotIn('mm-admin-header', shop)
+        dash = self.client.get(reverse('dashboard:customer_dashboard')).content.decode()
+        self.assertIn('mm-navbar', dash)
+        self.assertNotIn('mm-admin-header', dash)
+
+    def test_vendor_dashboard_keeps_the_customer_style_navbar(self):
+        self.login(self.vendor)
+        html = self.client.get(reverse('vendors:dashboard')).content.decode()
+        self.assertIn('mm-navbar', html)
+        self.assertNotIn('mm-admin-header', html)

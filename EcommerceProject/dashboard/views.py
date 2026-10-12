@@ -11,10 +11,10 @@ from django.utils.http import url_has_allowed_host_and_scheme
 
 from vendors.models import VendorStore
 from catalog.models import Product
+from . import analytics
 from orders.models import Order, VendorOrder
 from accounts.models import User
 from wishlist.models import Wishlist
-from . import analytics
 # Create your views here.
 
 
@@ -46,8 +46,11 @@ def back_or(request, default_name):
 def redirect_by_role(request):
     """Sends a freshly logged-in user to the dashboard that matches their role."""
     user = request.user
+    # Same predicate RoleAdminSite uses, so this can never loop: whoever it sends to /admin/ is admitted there.
+    if user.can_use_django_admin:
+        return redirect('admin:index')          # Super Admin -> Django's built-in admin
     if user.is_admin_role:
-        return redirect('dashboard:admin_dashboard')
+        return redirect('dashboard:admin_dashboard')   # regular Admin -> custom dashboard
     if user.is_vendor_role:
         return redirect('vendors:dashboard')
     return redirect('dashboard:customer_dashboard')
@@ -74,10 +77,11 @@ def customer_dashboard(request):
 @admin_required
 @require_safe
 def admin_dashboard(request):
-    """Overview. All figures come from the database (see dashboard/analytics.py)."""
-    range_key = request.GET.get('range', '30d')
-    if range_key not in dict(analytics.CHART_RANGES):
-        range_key = '30d'
+    """Overview page. Every number, chart and table comes from dashboard/analytics.py, the single
+    place these figures are calculated. The view only validates the chart range."""
+    range_key = request.GET.get('range', analytics.DEFAULT_RANGE)
+    if range_key not in analytics.RANGE_KEYS:
+        range_key = analytics.DEFAULT_RANGE
     context = analytics.overview(range_key)
     context['active'] = 'overview'
     return render(request, 'dashboard/admin_dashboard.html', context)

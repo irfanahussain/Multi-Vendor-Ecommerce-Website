@@ -27,7 +27,7 @@
         <li class="list-group-item d-flex justify-content-between"><span>Signed in as</span><span class="fw-semibold">{{ user.username }}</span></li>
         <li class="list-group-item d-flex justify-content-between"><span>Role</span><span class="fw-semibold">{{ user.get_role_display }}</span></li>
         <li class="list-group-item d-flex justify-content-between"><span>System console access</span>
-          <span>{% if user.is_staff %}<span class="badge badge-approved rounded-pill">Allowed</span>{% else %}<span class="badge badge-oos rounded-pill">Not enabled</span>{% endif %}</span></li>
+          <span>{% if user.can_use_django_admin %}<span class="badge badge-approved rounded-pill">Allowed</span>{% else %}<span class="badge badge-oos rounded-pill">Not enabled</span>{% endif %}</span></li>
       </ul>
     </div>
     <div class="card">

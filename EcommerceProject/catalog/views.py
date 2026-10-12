@@ -222,12 +222,14 @@ def vendor_variant_stock(request,pk):
         form=StockAdjustForm(request.POST)
         if form.is_valid():
             change=form.cleaned_data['change_quantity']
-            new_qty=variant.stock_quantity+change
-            if new_qty<0:
+            # One conditional UPDATE, not read-modify-save: a checkout that reserves stock at the same
+            # moment cannot be overwritten by this adjustment, and stock still cannot go below zero.
+            qs=ProductVariant.objects.filter(pk=variant.pk)
+            if change<0:
+                qs=qs.filter(stock_quantity__gte=-change)
+            if not qs.update(stock_quantity=F('stock_quantity')+change):
                 messages.error(request,"Stock can't go below zero.")
             else:
-                variant.stock_quantity=new_qty
-                variant.save()
                 StockHistory.objects.create(
                     variant=variant,
                     change_quantity=change,

@@ -15,16 +15,16 @@ class UserAdmin(DjangoUserAdmin):
         ('Role', {
             'fields': ('role',),
             'description': (
-                'Application role. Super Admin = full Django Admin/superuser access. '
-                'Admin = Admin Dashboard, never a superuser (tick "Staff status" and add '
-                'Groups only if they should also use Django Admin). '
-                'Vendor and Customer never get Django Admin access.'
+                'Application role. Super Admin = the only role that can use Django Admin '
+                '(full access). Admin = custom Admin Dashboard only; Django Admin refuses '
+                'it even with Staff status ticked. Vendor and Customer never get Django Admin access.'
             ),
         }),
         ('Personal info', {'fields': ('first_name', 'last_name', 'email', 'mobile_number', 'profile_image')}),
         ('Permissions', {
             'fields': ('is_active', 'is_active_account', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
-            'description': 'Superuser status follows the role and cannot be edited here.',
+            'description': ('Superuser status follows the role and cannot be edited here. '
+                            'Staff status alone does not open Django Admin; only the Super Admin role does.'),
         }),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
     )

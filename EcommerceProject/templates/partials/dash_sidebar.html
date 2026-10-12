@@ -24,7 +24,7 @@
     <a class="dash-link {% if active == 'reports' %}active{% endif %}" href="{% url 'dashboard:admin_reports' %}"><i class="bi bi-bar-chart-line"></i> Reports</a>
     <div class="dash-group">System</div>
     <a class="dash-link {% if active == 'settings' %}active{% endif %}" href="{% url 'dashboard:admin_settings' %}"><i class="bi bi-gear"></i> Settings</a>
-    {% if user.is_staff %}
+    {% if user.can_use_django_admin %}
     <a class="dash-link" href="{% url 'admin:index' %}"><i class="bi bi-gear-wide-connected"></i> Django Admin (System)</a>
     {% endif %}
     {% else %}

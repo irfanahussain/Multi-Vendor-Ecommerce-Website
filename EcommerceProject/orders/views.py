@@ -106,7 +106,9 @@ def cart_view(request):
 @require_POST
 @login_required
 def cart_add(request, variant_id):
-    variant = get_object_or_404(ProductVariant, pk=variant_id, is_active=True)
+    # Only sellable variants of approved, active products can go into a cart.
+    variant = get_object_or_404(ProductVariant.objects.select_related('product'), pk=variant_id,
+                                is_active=True, product__status=Product.Status.ACTIVE)
     quantity = _parse_quantity(request.POST.get('quantity', 1))
     if quantity is None or quantity < 1:
         messages.error(request, 'Please enter a valid quantity.')
@@ -344,6 +346,12 @@ def _place_order(request, cart, address, payment_method, coupon, buy_now_items=N
         cart_items = list(cart.items.select_related('variant__product__vendor'))
     if not cart_items:
         raise CheckoutError('Your cart is empty.')
+    # An item can stop being sellable after it was added (product rejected or deactivated,
+    # variant switched off). Checked here, inside the transaction, so it cannot slip through.
+    for item in cart_items:
+        if not item.variant.is_active or item.variant.product.status != Product.Status.ACTIVE:
+            raise CheckoutError(f"'{item.variant.product.name}' is no longer available. "
+                                "Please remove it from your cart.")
 
     # Lock the coupon row and re-validate it so two checkouts can't both
     # use the last remaining redemption.

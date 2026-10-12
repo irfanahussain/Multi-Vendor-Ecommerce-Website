@@ -3,6 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.utils.http import url_has_allowed_host_and_scheme
 from .forms import RegisterForm,ProfileForm,AddressForm
 from .models import Address
 from vendors.models import VendorStore
@@ -50,7 +51,12 @@ def address_add(request):
             address.user = request.user
             address.save()
             messages.success(request, 'Address added.')
-            return redirect(request.GET.get('next') or 'accounts:profile')
+            # Only same-site targets: a ?next= pointing elsewhere must not redirect the customer off-site.
+            next_url = request.GET.get('next', '')
+            if not url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()},
+                                                   require_https=request.is_secure()):
+                next_url = ''
+            return redirect(next_url or 'accounts:profile')
     else:
         form = AddressForm()
     return render(request, 'accounts/address_form.html', {'form': form})

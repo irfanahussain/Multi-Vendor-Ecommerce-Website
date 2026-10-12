@@ -65,6 +65,17 @@ class User(AbstractUser):
         return self.role == self.Role.ADMIN or self.is_super_admin_role
 
     @property
+    def can_use_django_admin(self):
+        """Django Admin (/admin/) is for active Super Admin accounts only.
+
+        Checked on the role AND the superuser flag, never is_staff alone: an Admin
+        with is_staff=True, or with Django permissions from Groups, is refused.
+        """
+        return bool(self.is_active and self.role == self.Role.SUPER_ADMIN
+                    and self.is_superuser and self.is_staff)
+
+
+    @property
     def is_vendor_role(self):
         return self.role == self.Role.VENDOR and not self.is_superuser
 
