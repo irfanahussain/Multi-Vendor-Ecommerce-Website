@@ -64,7 +64,7 @@ def address_add(request):
 
 @login_required
 def address_delete(request, pk):
-    address = get_object_or_404(Address, pk=pk, user=request.user)
+    address = get_object_or_404(Address,pk=pk,user=request.user)
     address.delete()
-    messages.success(request, 'Address removed.')
+    messages.success(request,'Address removed.')
     return redirect('accounts:profile')

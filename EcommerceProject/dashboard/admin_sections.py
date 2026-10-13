@@ -15,6 +15,7 @@ from django.views.decorators.http import require_POST, require_safe
 from accounts.models import User
 from catalog.models import Product
 from catalog.money import format_money
+from orders.finance import LINE_NET, NET_SUBTOTAL
 from orders.models import Coupon, Order, OrderItem, VendorOrder
 from returns_app.models import Refund
 from vendors.models import VendorStore
@@ -211,7 +212,7 @@ def reports(request):
 
     orders = within(Order.objects.all())
     live = within(VendorOrder.objects.exclude(status__in=DEAD_STATUSES))
-    money = live.aggregate(sales=Sum('subtotal'), commission=Sum('commission_amount'),
+    money = live.aggregate(sales=Sum(NET_SUBTOTAL), commission=Sum('commission_amount'),
                            earnings=Sum('vendor_earning'))
     refunded = within(Refund.objects.filter(status=Refund.Status.COMPLETED), 'processed_at').aggregate(n=Sum('amount'))['n']
 
@@ -220,11 +221,11 @@ def reports(request):
                  for row in within(VendorOrder.objects.all()).values('status').annotate(count=Count('pk')).order_by('-count')]
 
     top_vendors = (live.values('vendor__username', 'vendor__store__store_name')
-                   .annotate(sales=Sum('subtotal'), commission=Sum('commission_amount'), orders=Count('pk'))
+                   .annotate(sales=Sum(NET_SUBTOTAL), commission=Sum('commission_amount'), orders=Count('pk'))
                    .order_by('-sales')[:5])
-    line_total = ExpressionWrapper(F('price') * F('quantity'), output_field=DecimalField(max_digits=14, decimal_places=2))
     items = within(OrderItem.objects.exclude(vendor_order__status__in=DEAD_STATUSES), 'vendor_order__created_at')
-    top_products = (items.values('product_name').annotate(units=Sum('quantity'), revenue=Sum(line_total))
+    top_products = (items.values('product_name')
+                    .annotate(units=Sum(F('quantity') - F('returned_quantity')), revenue=Sum(LINE_NET))
                     .order_by('-units', 'product_name')[:5])
 
     return render(request, 'dashboard/manage/reports.html', {

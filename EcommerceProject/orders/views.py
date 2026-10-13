@@ -13,6 +13,8 @@ from django.views.decorators.http import require_POST
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.views import redirect_to_login
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.http import Http404
+from catalog.visibility import visible_products, product_is_sellable
 
 from catalog.models import Product, ProductVariant, StockHistory
 from accounts.models import Address
@@ -106,9 +108,10 @@ def cart_view(request):
 @require_POST
 @login_required
 def cart_add(request, variant_id):
-    # Only sellable variants of approved, active products can go into a cart.
-    variant = get_object_or_404(ProductVariant.objects.select_related('product'), pk=variant_id,
-                                is_active=True, product__status=Product.Status.ACTIVE)
+    # Only sellable variants can go into a cart: active product, store not rejected/inactive.
+    variant = get_object_or_404(ProductVariant.objects.select_related('product'), pk=variant_id, is_active=True)
+    if not product_is_sellable(variant.product):
+        raise Http404
     quantity = _parse_quantity(request.POST.get('quantity', 1))
     if quantity is None or quantity < 1:
         messages.error(request, 'Please enter a valid quantity.')
@@ -281,7 +284,7 @@ def buy_now(request):
 
     product = None
     if product_id is not None:
-        product = Product.objects.filter(pk=product_id, status=Product.Status.ACTIVE).first()
+        product = visible_products().filter(pk=product_id).first()
     if product is None:
         messages.error(request, 'That product is no longer available.')
         return redirect('catalog:home')
@@ -317,6 +320,8 @@ def checkout_buy_now(request):
 
     variant = (ProductVariant.objects.select_related('product__vendor__store')
                .filter(pk=data.get('variant_id'), is_active=True, product__status=Product.Status.ACTIVE).first())
+    if variant is not None and not product_is_sellable(variant.product):
+        variant = None
     quantity = data.get('quantity')
     if variant is None or not isinstance(quantity, int) or quantity < 1:
         request.session.pop(BUY_NOW_SESSION_KEY, None)
@@ -349,7 +354,7 @@ def _place_order(request, cart, address, payment_method, coupon, buy_now_items=N
     # An item can stop being sellable after it was added (product rejected or deactivated,
     # variant switched off). Checked here, inside the transaction, so it cannot slip through.
     for item in cart_items:
-        if not item.variant.is_active or item.variant.product.status != Product.Status.ACTIVE:
+        if not item.variant.is_active or not product_is_sellable(item.variant.product):
             raise CheckoutError(f"'{item.variant.product.name}' is no longer available. "
                                 "Please remove it from your cart.")
 

@@ -66,7 +66,7 @@ def customer_dashboard(request):
         'recent_orders': orders[:5],
         'pending_orders': VendorOrder.objects.filter(
             order__customer=request.user
-        ).exclude(status__in=['delivered', 'cancelled']).count(),
+        ).exclude(status__in=['delivered', 'cancelled', 'returned', 'refunded']).count(),
         'delivered_orders': VendorOrder.objects.filter(order__customer=request.user, status='delivered').count(),
         'wishlist_count': Wishlist.objects.filter(user=request.user).count(),
         'saved_addresses': request.user.addresses.count(),

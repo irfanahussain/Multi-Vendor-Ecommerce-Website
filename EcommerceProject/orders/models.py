@@ -123,14 +123,23 @@ class VendorOrder(models.Model):
     commission_percent=models.DecimalField(max_digits=5, decimal_places=2,default=10)
     commission_amount=models.DecimalField(max_digits=10, decimal_places=2,default=0)
     vendor_earning=models.DecimalField(max_digits=10, decimal_places=2,default=0)
+    # Value of items received back (price x returned units). Commission and earnings use
+    # subtotal - returned_amount; see orders/finance.py for the full rules.
+    returned_amount=models.DecimalField(max_digits=10, decimal_places=2,default=0)
 
     created_at=models.DateTimeField(auto_now_add=True)
     updated_at=models.DateTimeField(auto_now=True)
 
+    @property
+    def net_subtotal(self):
+        """Gross sub-order value minus items returned and received back."""
+        return self.subtotal - (self.returned_amount or 0)
+
     def save(self,*args,**kwargs):
         if self.subtotal:
-            self.commission_amount=self.subtotal*self.commission_percent/100
-            self.vendor_earning=self.subtotal-self.commission_amount
+            net=self.net_subtotal
+            self.commission_amount=net*self.commission_percent/100
+            self.vendor_earning=net-self.commission_amount
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -144,6 +153,8 @@ class OrderItem(models.Model):
     variant_name=models.CharField(max_length=150,blank=True)
     price=models.DecimalField(max_digits=10,decimal_places=2)  # snapshot price at purchase time
     quantity=models.PositiveIntegerField()
+    # Units physically received back through an approved return (status RETURNED or REFUNDED).
+    returned_quantity=models.PositiveIntegerField(default=0)
 
     def line_total(self):
         return self.price * self.quantity

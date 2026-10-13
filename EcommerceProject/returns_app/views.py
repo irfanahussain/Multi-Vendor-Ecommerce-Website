@@ -1,10 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db import transaction
 from django.db.models import Sum
-from orders.models import OrderItem
+from orders.models import OrderItem, VendorOrder
 from .forms import ReturnRequestForm
 from .models import ReturnRequest
+from .services import units_claimed
 # Create your views here.
 
 
@@ -21,19 +23,27 @@ def request_return(request, order_item_id):
     if request.method == 'POST':
         form = ReturnRequestForm(request.POST)
         if form.is_valid():
-            already = order_item.return_requests.exclude(
-                status=ReturnRequest.Status.REJECTED
-            ).aggregate(total=Sum('quantity'))['total'] or 0
-            remaining = order_item.quantity - already
-            if form.cleaned_data['quantity'] < 1:
-                messages.error(request, "Return quantity must be at least 1.")
-            elif form.cleaned_data['quantity'] > remaining:
-                messages.error(request, f"You can return at most {remaining} more of this item.")
-            else:
-                return_request = form.save(commit=False)
-                return_request.order_item = order_item
-                return_request.customer = request.user
-                return_request.save()
+            created = None
+            # Lock the item and its sub-order, then check the remaining quantity and create the request
+            # in the same transaction. Two simultaneous requests therefore run one after the other, and
+            # the second sees the first one's quantity: accepted units can never exceed purchased units.
+            with transaction.atomic():
+                locked_item = OrderItem.objects.select_for_update().get(pk=order_item.pk)
+                locked_order = VendorOrder.objects.select_for_update().get(pk=locked_item.vendor_order_id)
+                remaining = locked_item.quantity - units_claimed(locked_item)
+                quantity = form.cleaned_data['quantity']
+                if locked_order.status != 'delivered':
+                    messages.error(request, 'Only delivered items can be returned.')
+                elif quantity < 1:
+                    messages.error(request, "Return quantity must be at least 1.")
+                elif quantity > remaining:
+                    messages.error(request, f"You can return at most {max(remaining, 0)} more of this item.")
+                else:
+                    created = form.save(commit=False)
+                    created.order_item = locked_item
+                    created.customer = request.user
+                    created.save()
+            if created is not None:
                 messages.success(request, 'Return request submitted.')
                 return redirect('returns:my_returns')
     else:

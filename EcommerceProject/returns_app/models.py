@@ -21,6 +21,9 @@ class ReturnRequest(models.Model):
     description = models.TextField(blank=True)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.REQUESTED)
     created_at = models.DateTimeField(auto_now_add=True)
+    # Set when the returned goods arrive and are restocked (status moves Approved -> Returned).
+    # A request with this set is never restocked again.
+    received_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"Return #{self.pk} - {self.order_item.product_name}"

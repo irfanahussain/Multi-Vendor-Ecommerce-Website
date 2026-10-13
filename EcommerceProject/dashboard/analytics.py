@@ -13,6 +13,7 @@ from django.utils import timezone
 from accounts.models import User
 from catalog.models import Product, ProductVariant
 from catalog.money import format_money
+from orders.finance import LINE_NET
 from orders.models import Order, OrderItem, VendorOrder
 from vendors.models import VendorStore
 
@@ -153,7 +154,7 @@ def overview(range_key):
                         .aggregate(total=Sum('commission_amount'))['total'] or 0)
 
     # Category performance: revenue from live sub-orders, grouped by the product's category.
-    line_total = ExpressionWrapper(F('price') * F('quantity'), output_field=DecimalField(max_digits=14, decimal_places=2))
+    line_total = LINE_NET   # net of units returned and received back
     category_rows = [
         {'label': row['variant__product__category__name'] or 'Uncategorised', 'value': row['revenue'] or 0}
         for row in (OrderItem.objects.exclude(vendor_order__status__in=DEAD_STATUSES)

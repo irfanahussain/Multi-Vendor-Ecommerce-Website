@@ -16,8 +16,10 @@ from django.views.decorators.http import require_POST, require_safe
 from accounts.models import User
 from catalog.models import Brand, Category
 from catalog.money import format_money
+from orders.finance import NET_SUBTOTAL
 from orders.models import Coupon, Order, VendorOrder
 from returns_app.models import Refund, ReturnRequest
+from returns_app.services import (ReturnError, mark_refund_completed, mark_return_received)
 
 from .forms import BrandForm, CategoryForm, CouponAdminForm
 from .views import admin_required, back_or as _back
@@ -266,12 +268,20 @@ def return_update(request, pk):
     with transaction.atomic():
         return_request = get_object_or_404(ReturnRequest.objects.select_for_update(), pk=pk)
         new_status = request.POST.get('status', '')
-        if new_status in dict(_return_next_actions(return_request)):
+        if new_status not in dict(_return_next_actions(return_request)):
+            messages.error(request, 'That status change is not allowed.')
+        elif new_status == RS.RETURNED:
+            # Goods received: restock once and update the sub-order (see returns_app/services.py).
+            try:
+                mark_return_received(return_request.pk)
+            except ReturnError as exc:
+                messages.error(request, str(exc))
+            else:
+                messages.success(request, f'Return #{return_request.pk} received and restocked.')
+        else:
             return_request.status = new_status
             return_request.save()
             messages.success(request, f'Return #{return_request.pk} marked "{return_request.get_status_display()}".')
-        else:
-            messages.error(request, 'That status change is not allowed.')
     return _back(request, 'dashboard:admin_returns')
 
 
@@ -336,10 +346,11 @@ def refund_update(request, pk):
             refund.status = new_status
             if new_status == FS.COMPLETED:
                 refund.processed_at = timezone.now()
-                # Money has gone back: the return itself is now finished.
-                refund.return_request.status = RS.REFUNDED
-                refund.return_request.save()
-            refund.save()
+                refund.save()
+                # Money has gone back: the return is finished and the sub-order status is re-checked.
+                mark_refund_completed(refund.return_request)
+            else:
+                refund.save()
             messages.success(request, f'Refund #{refund.pk} marked "{refund.get_status_display()}".')
     return _back(request, 'dashboard:admin_refunds')
 
@@ -363,7 +374,7 @@ def commission_list(request):
         vendor_orders = vendor_orders.filter(order__order_number__icontains=q)
     # Same rule as the vendor's own dashboard: cancelled/returned/refunded orders earn nothing.
     live = vendor_orders.exclude(status__in=['cancelled', 'returned', 'refunded'])
-    totals = live.aggregate(sales=Sum('subtotal'), commission=Sum('commission_amount'),
+    totals = live.aggregate(sales=Sum(NET_SUBTOTAL), commission=Sum('commission_amount'),
                             earnings=Sum('vendor_earning'), count=Count('pk'))
     page, qs = _paginate(request, vendor_orders)
     return render(request, 'dashboard/manage/commission_list.html', {

@@ -10,8 +10,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
+import secrets
 from pathlib import Path
+
 from django.contrib.messages import constants as message_constants
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,13 +24,28 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-(e-p-+^qjg1&@x7_^57!$tmr#*t$s6ttfjzuk(1j0)$f(i*()7'
+def _env_flag(name, default=False):
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.strip().lower() in ('1', 'true', 'yes', 'on')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+# Debug is OFF unless DJANGO_DEBUG=1 is set. Production must never run with it on.
+DEBUG = _env_flag('DJANGO_DEBUG', default=False)
+
+# SECURITY WARNING: the secret key is read from the environment and never committed.
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', '')
+if not SECRET_KEY:
+    if DEBUG:
+        # Local development only: a throwaway key, regenerated on every start (logins reset on restart).
+        SECRET_KEY = secrets.token_urlsafe(50)
+    else:
+        raise ImproperlyConfigured('DJANGO_SECRET_KEY is not set. See SETUP.md for how to set it.')
+
+# Comma-separated host names this site may be served as, e.g. "shop.example.com,www.shop.example.com".
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get(
+    'DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,[::1]').split(',') if h.strip()]
 
 
 # Application definition

@@ -7,7 +7,10 @@ from django.core.exceptions import PermissionDenied
 from .decorators import vendor_required,get_vendor_store,vendor_has_access
 from .forms import VendorStoreForm
 from catalog.models import Product,ProductVariant
+from catalog.visibility import visible_products, VISIBLE_STORE_STATUSES
+from orders.finance import NET_SUBTOTAL
 from orders.models import VendorOrder
+from django.http import Http404
 
 # Create your views here.
 
@@ -64,7 +67,7 @@ def vendor_dashboard(request):
     }
     vos=VendorOrder.objects.filter(vendor=request.user)
     live=vos.exclude(status__in=['cancelled','returned','refunded'])
-    agg=live.aggregate(s=Sum('subtotal'),c=Sum('commission_amount'),e=Sum('vendor_earning'))
+    agg=live.aggregate(s=Sum(NET_SUBTOTAL),c=Sum('commission_amount'),e=Sum('vendor_earning'))
     context.update({
         'total_orders':vos.count(),
         'pending_orders':vos.filter(status='pending').count(),
@@ -78,5 +81,10 @@ def vendor_dashboard(request):
 
 def store_public_view(request,store_id):
     store=get_object_or_404(VendorStore,id=store_id)
-    products=Product.objects.filter(vendor=store.vendor,status=Product.Status.ACTIVE)
+    # A rejected or inactive store has no public page. Its owner and admins may still open it.
+    u=request.user
+    may_preview=u.is_authenticated and (u.is_admin_role or store.vendor_id==u.id)
+    if store.status not in VISIBLE_STORE_STATUSES and not may_preview:
+        raise Http404
+    products=visible_products(Product.objects.filter(vendor=store.vendor)) if store.status in VISIBLE_STORE_STATUSES else Product.objects.none()
     return render(request,'vendors/store_public.html',{'store':store,'products':products})

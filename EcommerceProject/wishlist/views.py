@@ -5,6 +5,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from catalog.models import Product, ProductVariant
+from catalog.visibility import visible_products
 from .decorators import customer_required, safe_next
 from .models import Wishlist
 
@@ -38,7 +39,7 @@ def wishlist_view(request):
 @customer_required
 @require_POST
 def wishlist_add(request, product_id):
-    product = get_object_or_404(Product, pk=product_id, status=Product.Status.ACTIVE)
+    product = get_object_or_404(visible_products(), pk=product_id)
     _, created = Wishlist.objects.get_or_create(user=request.user, product=product)
     if created:
         messages.success(request, f"Added {product.name} to your wishlist.")

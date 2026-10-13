@@ -9,10 +9,11 @@ from .models import Product,Category,Brand,ProductVariant,StockHistory
 from .forms import ProductForm,ProductVariantForm,StockAdjustForm
 from vendors.decorators import vendor_required
 from wishlist.utils import wishlisted_ids
+from .visibility import visible_products, product_is_sellable
 
 def landing(request):
     from orders.views import FREE_SHIPPING_THRESHOLD
-    active=Product.objects.filter(status=Product.Status.ACTIVE).select_related('vendor','category')
+    active=visible_products().select_related('vendor','category')
     best=list(active.annotate(sold=Sum('variants__orderitem__quantity')).order_by(F('sold').desc(nulls_last=True),'-created_at')[:12])
     def pct(p):
         d=p.discount_percent
@@ -53,7 +54,7 @@ def _decimal_or_none(raw):
     return min(value,MAX_FILTER_PRICE)
 
 def home(request):
-    products=(Product.objects.filter(status=Product.Status.ACTIVE)
+    products=(visible_products()
               .select_related('vendor','vendor__store','category').prefetch_related('variants'))
     query=request.GET.get('q','').strip()
     category_slug=request.GET.get('category','').strip()
@@ -116,10 +117,11 @@ def home(request):
 def product_detail(request,slug):
     product=get_object_or_404(Product,slug=slug)
     u=request.user
-    if product.status!=Product.Status.ACTIVE and not (u.is_authenticated and (u.is_admin_role or product.vendor_id==u.id)):
+    # Hidden when the product is not ACTIVE or its store is rejected/inactive. The owner and admins may preview.
+    if not product_is_sellable(product) and not (u.is_authenticated and (u.is_admin_role or product.vendor_id==u.id)):
         raise Http404
     variants=sorted(product.variants.filter(is_active=True).order_by('id'),key=lambda v:v.stock_quantity==0)
-    related=(Product.objects.filter(category=product.category,status=Product.Status.ACTIVE).exclude(pk=product.pk)
+    related=(visible_products(Product.objects.filter(category=product.category)).exclude(pk=product.pk)
              .select_related('vendor','vendor__store') if product.category_id else Product.objects.none())[:4]
     reviews=list(product.reviews.filter(is_hidden=False).select_related('customer').order_by('-created_at'))
     can_review=False
