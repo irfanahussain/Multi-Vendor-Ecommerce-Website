@@ -19,6 +19,7 @@ from orders.finance import LINE_NET, NET_SUBTOTAL
 from orders.models import Coupon, Order, OrderItem, VendorOrder
 from returns_app.models import Refund
 from vendors.models import VendorStore
+from .activity import log_customer_block, log_product_status, log_vendor_status
 
 from .admin_views import _paginate
 from .views import admin_required, back_or as _back
@@ -64,6 +65,7 @@ def vendor_set_status(request, pk):
     else:
         store.status = new_status
         store.save()
+        log_vendor_status(request.user, store)
         messages.success(request, f'{store.store_name} is now "{store.get_status_display()}".')
     return _back(request, 'dashboard:admin_vendors')
 
@@ -98,6 +100,7 @@ def customer_toggle(request, pk):
     customer = get_object_or_404(User, pk=pk, role=User.Role.CUSTOMER)
     customer.is_active = not customer.is_active
     customer.save()
+    log_customer_block(request.user, customer)
     messages.success(request, f'{customer.username} {"unblocked" if customer.is_active else "blocked"}.')
     return _back(request, 'dashboard:admin_customers')
 
@@ -134,6 +137,7 @@ def product_set_status(request, pk):
     else:
         product.status = new_status
         product.save()
+        log_product_status(request.user, product)
         messages.success(request, f'"{product.name}" is now "{product.get_status_display()}".')
     return _back(request, 'dashboard:admin_products')
 

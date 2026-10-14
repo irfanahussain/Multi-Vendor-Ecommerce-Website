@@ -196,12 +196,14 @@ class RoleAccessTests(TestCase):
         self._login(self.admin)
         self.assertFalse(self._in_django_admin())
 
-    def test_admin_with_staff_flag_can_enter_django_admin_but_is_not_superuser(self):
+    def test_admin_with_staff_flag_cannot_enter_django_admin(self):
+        # Django Admin is Super Admin only (RoleAdminSite). is_staff does not open it.
         self._login(self.staff_admin)
-        self.assertTrue(self._in_django_admin())
+        self.assertFalse(self._in_django_admin())
         self.assertFalse(self.staff_admin.is_superuser)
-        # no permissions via Groups yet -> cannot see/change users
-        self.assertEqual(self.client.get(reverse('admin:accounts_user_changelist')).status_code, 403)
+        resp = self.client.get(reverse('admin:accounts_user_changelist'))
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp['Location'], reverse('dashboard:redirect'))
 
     def test_admin_can_approve_vendor(self):
         # Approval is a state change, so it is POST-only (a GET must never approve).
@@ -322,7 +324,9 @@ class UserAdminRoleTests(TestCase):
     def test_staff_admin_cannot_grant_super_admin(self):
         self.client.force_login(self.staff_admin)
         resp = self.client.get(reverse('admin:accounts_user_change', args=[self.target.pk]))
-        self.assertNotContains(resp, '>Super Admin</option>')
+        # Refused before the form is built, so there is no role dropdown at all.
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp['Location'], reverse('dashboard:redirect'))
         self.client.post(reverse('admin:accounts_user_change', args=[self.target.pk]),
                          self._post_data(self.target, role=R.SUPER_ADMIN))
         self.target.refresh_from_db()
@@ -331,4 +335,7 @@ class UserAdminRoleTests(TestCase):
     def test_staff_admin_cannot_edit_a_super_admin(self):
         self.client.force_login(self.staff_admin)
         resp = self.client.get(reverse('admin:accounts_user_change', args=[self.super_admin.pk]))
-        self.assertEqual(resp.status_code, 403)
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp['Location'], reverse('dashboard:redirect'))
+        self.super_admin.refresh_from_db()
+        self.assertEqual(self.super_admin.role, R.SUPER_ADMIN)

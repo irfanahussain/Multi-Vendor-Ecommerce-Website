@@ -12,6 +12,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from vendors.models import VendorStore
 from catalog.models import Product
 from . import analytics
+from .activity import log_product_status, log_vendor_status
 from orders.models import Order, VendorOrder
 from accounts.models import User
 from wishlist.models import Wishlist
@@ -33,6 +34,19 @@ def admin_required(view_func):
     return wrapper
 
 
+def super_admin_required(view_func):
+    """Full Activity Log: Super Admin only. Anonymous users go to login; Admins and everyone else get 403."""
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        user = request.user
+        if not user.is_authenticated:
+            return redirect_to_login(request.get_full_path())
+        if not user.is_super_admin_role:
+            raise PermissionDenied
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
 def back_or(request, default_name):
     """After a POST action: return to the page it came from (same host only), else `default_name`."""
     target = request.POST.get('next', '')
@@ -46,11 +60,10 @@ def back_or(request, default_name):
 def redirect_by_role(request):
     """Sends a freshly logged-in user to the dashboard that matches their role."""
     user = request.user
-    # Same predicate RoleAdminSite uses, so this can never loop: whoever it sends to /admin/ is admitted there.
-    if user.can_use_django_admin:
-        return redirect('admin:index')          # Super Admin -> Django's built-in admin
     if user.is_admin_role:
-        return redirect('dashboard:admin_dashboard')   # regular Admin -> custom dashboard
+        # Admin and Super Admin both land on the custom dashboard.
+        # Super Admins open Django Admin from its sidebar link (Super Admin only).
+        return redirect('dashboard:admin_dashboard')
     if user.is_vendor_role:
         return redirect('vendors:dashboard')
     return redirect('dashboard:customer_dashboard')
@@ -110,6 +123,7 @@ def approve_vendor(request, pk):
     store = get_object_or_404(VendorStore, pk=pk)
     store.status = VendorStore.Status.APPROVED
     store.save()
+    log_vendor_status(request.user, store)
     messages.success(request, f'{store.store_name} approved.')
     return back_or(request, 'dashboard:admin_approvals')
 
@@ -120,6 +134,7 @@ def reject_vendor(request, pk):
     store = get_object_or_404(VendorStore, pk=pk)
     store.status = VendorStore.Status.REJECTED
     store.save()
+    log_vendor_status(request.user, store)
     messages.success(request, f'{store.store_name} rejected.')
     return back_or(request, 'dashboard:admin_approvals')
 
@@ -130,6 +145,7 @@ def approve_product(request, pk):
     product = get_object_or_404(Product, pk=pk)
     product.status = Product.Status.ACTIVE
     product.save()
+    log_product_status(request.user, product)
     messages.success(request, f'{product.name} approved and made active.')
     return back_or(request, 'dashboard:admin_approvals')
 
@@ -140,5 +156,6 @@ def reject_product(request, pk):
     product = get_object_or_404(Product, pk=pk)
     product.status = Product.Status.REJECTED
     product.save()
+    log_product_status(request.user, product)
     messages.success(request, f'{product.name} rejected.')
     return back_or(request, 'dashboard:admin_approvals')

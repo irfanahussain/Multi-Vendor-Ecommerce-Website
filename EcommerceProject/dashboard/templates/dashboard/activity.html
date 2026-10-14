@@ -1,0 +1,58 @@
+{% extends "dashboard/admin_base.html" %}
+{% block page_title %}Activity Log{% endblock %}
+{% block admin_content %}
+<p class="text-muted small mb-3">Completed admin, vendor and customer actions, newest first. Only Super Admins can see this page.</p>
+
+<form method="get" class="row g-2 align-items-end mb-3">
+  <div class="col-auto">
+    <label class="form-label small mb-1" for="f-action">Action</label>
+    <select id="f-action" name="action" class="form-select form-select-sm">
+      <option value="">All actions</option>
+      {% for value, label in actions %}
+      <option value="{{ value }}"{% if value == current_action %} selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-auto">
+    <label class="form-label small mb-1" for="f-days">Period</label>
+    <select id="f-days" name="days" class="form-select form-select-sm">
+      {% for value, label in day_options.items %}
+      <option value="{{ value }}"{% if value == current_days %} selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-auto">
+    <button type="submit" class="btn btn-sm btn-primary">Filter</button>
+  </div>
+</form>
+
+{% if page_obj.object_list %}
+<div class="table-responsive">
+  <table class="table table-sm align-middle">
+    <thead><tr><th>When</th><th>Who</th><th>Action</th><th>Details</th></tr></thead>
+    <tbody>
+    {% for entry in page_obj.object_list %}
+      <tr>
+        <td class="text-nowrap">{{ entry.created_at|date:"d M Y, H:i" }}</td>
+        <td>{% if entry.actor %}{{ entry.actor.username }}{% else %}<span class="text-muted">Deleted account</span>{% endif %}</td>
+        <td>{{ entry.get_action_display }}</td>
+        <td>{{ entry.summary }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% if page_obj.has_other_pages %}
+<nav class="d-flex gap-2 align-items-center small">
+  {% if page_obj.has_previous %}<a class="btn btn-sm btn-outline-secondary" href="?{{ query_base }}page={{ page_obj.previous_page_number }}">Newer</a>{% endif %}
+  <span class="text-muted">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}<a class="btn btn-sm btn-outline-secondary" href="?{{ query_base }}page={{ page_obj.next_page_number }}">Older</a>{% endif %}
+</nav>
+{% endif %}
+{% else %}
+<div class="text-center text-muted py-5 border rounded">
+  <i class="bi bi-clock-history fs-3 d-block mb-2"></i>
+  No activity recorded for this filter yet.
+</div>
+{% endif %}
+{% endblock %}

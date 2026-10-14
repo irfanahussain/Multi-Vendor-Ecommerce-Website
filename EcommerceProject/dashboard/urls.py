@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views, admin_views, admin_sections
+from . import views, admin_views, admin_sections, activity_views
 
 app_name = 'dashboard'
 
@@ -53,4 +53,5 @@ urlpatterns = [
     path('admin/promotions/', admin_sections.promotions, name='admin_promotions'),
     path('admin/reports/', admin_sections.reports, name='admin_reports'),
     path('admin/settings/', admin_sections.settings_page, name='admin_settings'),
+    path('admin/activity/', activity_views.activity_log, name='admin_activity'),
 ]

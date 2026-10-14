@@ -10,6 +10,7 @@ from .forms import ProductForm,ProductVariantForm,StockAdjustForm
 from vendors.decorators import vendor_required
 from wishlist.utils import wishlisted_ids
 from .visibility import visible_products, product_is_sellable
+from dashboard.activity import log_stock
 
 def landing(request):
     from orders.views import FREE_SHIPPING_THRESHOLD
@@ -238,6 +239,7 @@ def vendor_variant_stock(request,pk):
                     reason=StockHistory.Reason.ADJUSTMENT,
                     note=form.cleaned_data.get('note',''),
                 )
+                log_stock(request.user, variant, change)
                 messages.success(request,'Stock updated.')
             return redirect('catalog:vendor_product_variants',pk=variant.product.pk)
     else:

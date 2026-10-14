@@ -21,6 +21,7 @@ from orders.models import Coupon, Order, VendorOrder
 from returns_app.models import Refund, ReturnRequest
 from returns_app.services import (ReturnError, mark_refund_completed, mark_return_received)
 
+from .activity import log_coupon_created, log_refund_status
 from .forms import BrandForm, CategoryForm, CouponAdminForm
 from .views import admin_required, back_or as _back
 
@@ -43,6 +44,8 @@ def _form_page(request, *, form_class, instance, active, noun, list_url):
         form = form_class(request.POST, request.FILES, instance=instance)
         if form.is_valid():
             obj = form.save()
+            if isinstance(obj, Coupon) and instance is None:
+                log_coupon_created(request.user, obj)
             verb = 'updated' if instance else 'created'
             messages.success(request, f'{noun} "{obj}" {verb}.')
             return redirect(list_url)
@@ -351,6 +354,7 @@ def refund_update(request, pk):
                 mark_refund_completed(refund.return_request)
             else:
                 refund.save()
+            log_refund_status(request.user, refund)
             messages.success(request, f'Refund #{refund.pk} marked "{refund.get_status_display()}".')
     return _back(request, 'dashboard:admin_refunds')
 

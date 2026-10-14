@@ -15,6 +15,7 @@ from django.contrib.auth.views import redirect_to_login
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.http import Http404
 from catalog.visibility import visible_products, product_is_sellable
+from dashboard.activity import log_order_status
 
 from catalog.models import Product, ProductVariant, StockHistory
 from accounts.models import Address
@@ -472,6 +473,7 @@ def cancel_vendor_order(request, pk):
         if vendor_order.status in (VendorOrder.Status.PENDING, VendorOrder.Status.CONFIRMED):
             vendor_order.status = VendorOrder.Status.CANCELLED
             vendor_order.save()
+            log_order_status(request.user, vendor_order, VendorOrder.Status.CANCELLED.label)
             _restock_vendor_order(vendor_order, f"Cancelled {vendor_order}")
             messages.success(request, 'Order cancelled.')
         else:
@@ -504,6 +506,7 @@ def vendor_order_detail(request, pk):
             else:
                 vendor_order.status = new_status
                 vendor_order.save()
+                log_order_status(request.user, vendor_order, VendorOrder.Status(new_status).label)
                 if new_status == VendorOrder.Status.CANCELLED:
                     _restock_vendor_order(vendor_order, f"Cancelled by vendor {vendor_order}")
                 messages.success(
